@@ -189,7 +189,7 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 .toast.on{opacity:1}
 </style>
 
-<div class="promo" id="promo"><div class="wrap"><span>Peça até <span id="promoDate"></span> para receber antes do Natal</span><b id="count" aria-live="off"></b></div></div>
+<div class="promo" id="promo"><div class="wrap"><span id="promoMsg">Entrega para todo o Brasil. Confirmamos o prazo para o seu CEP no WhatsApp antes de fechar o pedido.</span><b id="count" aria-live="off"></b></div></div>
 
 <header class="top"><div class="wrap">
   <a class="logo" href="#topo"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.6 6.4L21 9l-5 4.4L17.6 20 12 16.6 6.4 20 8 13.4 3 9l6.4-.6z" fill="#d4a23a"/></svg>Magia Natalina</a>
@@ -275,7 +275,8 @@ var CONFIG = {
   parcelasMax: 12,                      // máximo de parcelas sem juros
   parcelaMinima: 5,                     // valor mínimo de cada parcela (R$)
   freteGratisAcima: 199,                // valor para frete grátis (0 para desligar)
-  prazoPedidos: "2026-12-15T23:59:59-03:00", // data limite exibida na faixa verde
+  prazoPedidos: "",                     // opcional: data limite com contagem regressiva (ex.: "2026-12-15T23:59:59-03:00"). Vazio = sem contagem
+  mensagemPromo: "",                    // opcional: troca o texto da faixa verde (só informe prazos que você consegue cumprir)
   depoimentos: []                       // ex.: [{texto:"...", nome:"Maria, SP"}] — use só avaliações reais
 };
 var CATS = [
@@ -952,14 +953,14 @@ $("#closeCart").addEventListener("click",closeAll);
 /* ---------- contagem regressiva ---------- */
 function tick(){
   var fim=new Date(CONFIG.prazoPedidos).getTime(), ms=fim-Date.now();
-  if(isNaN(fim)||ms<=0){ $("#promo").hidden=true; return; }
+  if(isNaN(fim)||ms<=0){ $("#count").textContent=""; return; }
   var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1e3);
   var z=function(n){return String(n).padStart(2,"0")};
   $("#count").textContent=d+"d "+z(h)+"h "+z(m)+"min "+z(s)+"s";
 }
 
 /* ---------- início ---------- */
-$("#promoDate").textContent=new Date(CONFIG.prazoPedidos).toLocaleDateString("pt-BR",{day:"numeric",month:"long"});
+if(CONFIG.mensagemPromo) $("#promoMsg").textContent=CONFIG.mensagemPromo;
 if(CONFIG.pixDesconto>0) $("#pixPerk").textContent=CONFIG.pixDesconto+"% de desconto no Pix";
 $("#footWa").textContent=fmtFone(CONFIG.whatsapp);
 if(CONFIG.email) $("#footMail").textContent="E-mail: "+CONFIG.email;
