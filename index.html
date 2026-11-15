@@ -185,6 +185,12 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 .pix .tempo{color:var(--muted);font-size:.9rem;margin:.4rem 0}
 .pix .btn{width:100%;margin-top:.5rem}
 .pix small{display:block;color:var(--muted);margin-top:.6rem}
+.cepbox{border:1px solid var(--line);border-radius:12px;padding:.7rem;margin-bottom:.6rem}
+.cepbox label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.4rem}
+.ceprow{display:flex;gap:.5rem}
+.ceprow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:.6rem .7rem;background:var(--surface);color:var(--fg);font-size:1rem}
+.ceprow .btn{padding:.5rem 1rem;min-height:42px}
+#cepmsg{font-size:.85rem;margin-top:.4rem;color:var(--muted)}
 .copybtn{background:none;border:0;text-decoration:underline;color:var(--muted);font-size:.88rem}
 .modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
 .modal.on{display:flex}
@@ -283,6 +289,9 @@ var CONFIG = {
   email: "",                            // opcional
   cnpj: "",                             // opcional
   pixApi: "https://magia-pix06a4.r50015088.workers.dev",   // servidor do Pix (Cloudflare). Vazio = esconde o botao
+  origemFrete: "Balneário Camboriú/SC",
+  // Frete estimado por região (valores em R$ - AJUSTE conforme o que você paga). Acima de freteGratisAcima o frete é grátis.
+  frete: { sul:{valor:19.9,prazo:"4 a 8 dias úteis"}, sudeste:{valor:24.9,prazo:"5 a 9 dias úteis"}, centro:{valor:34.9,prazo:"7 a 12 dias úteis"}, nordeste:{valor:44.9,prazo:"9 a 15 dias úteis"}, norte:{valor:54.9,prazo:"12 a 20 dias úteis"} },
   pixDesconto: 5,                       // % de desconto no Pix (0 para desligar)
   parcelasMax: 12,                      // máximo de parcelas sem juros
   parcelaMinima: 5,                     // valor mínimo de cada parcela (R$)
@@ -800,6 +809,11 @@ var fmt = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
 var cart = [], filtro = "todos", ordem = "destaque";
 try{ var saved = JSON.parse(localStorage.getItem("mn-cart")||"[]"); if(Array.isArray(saved)) cart = saved.filter(function(i){return PRODUCTS.some(function(p){return p.id===i.id})}); }catch(e){}
 function save(){ try{ localStorage.setItem("mn-cart", JSON.stringify(cart)); }catch(e){} }
+var UFREG={SC:"sul",PR:"sul",RS:"sul",SP:"sudeste",RJ:"sudeste",MG:"sudeste",ES:"sudeste",DF:"centro",GO:"centro",MT:"centro",MS:"centro",BA:"nordeste",SE:"nordeste",AL:"nordeste",PE:"nordeste",PB:"nordeste",RN:"nordeste",CE:"nordeste",PI:"nordeste",MA:"nordeste",AM:"norte",PA:"norte",AC:"norte",RO:"norte",RR:"norte",AP:"norte",TO:"norte"};
+var ship=null; try{ var sj=JSON.parse(localStorage.getItem("mn-cep")||"null"); if(sj&&UFREG[sj.uf]&&/^\d{8}$/.test(sj.cep)) ship=sj; }catch(e){}
+function fmtCep(c){ return c.replace(/^(\d{5})(\d{3})$/,"$1-$2"); }
+function freteValor(){ if(!ship) return null; var f=CONFIG.freteGratisAcima; if(f>0&&subtotal()>=f) return 0; return CONFIG.frete[UFREG[ship.uf]].valor; }
+function pixTotal(){ return Math.round(subtotal()*(100-CONFIG.pixDesconto))/100+(freteValor()||0); }
 function prod(id){ return PRODUCTS.filter(function(p){return p.id===id})[0]; }
 function catNome(id){ return CATS.filter(function(c){return c.id===id})[0].nome; }
 function fmtFone(n){ var d=n.replace(/\D/g,""); if(d.length>=12){ return "("+d.slice(2,4)+") "+d.slice(4,-4)+"-"+d.slice(-4);} return d; }
@@ -899,7 +913,10 @@ function subtotal(){ return cart.reduce(function(s,i){return s+prod(i.id).preco*
 function pedidoTexto(){
   var t="Olá! Quero finalizar meu pedido na Magia Natalina:\n";
   cart.forEach(function(i){ var p=prod(i.id); t+="- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"")+" ("+fmt.format(p.preco*i.qty)+")\n"; });
-  t+="Total: "+fmt.format(subtotal());
+  var fv=freteValor();
+  t+="Subtotal: "+fmt.format(subtotal())+"\n";
+  if(ship) t+="CEP "+fmtCep(ship.cep)+" ("+(ship.cidade?ship.cidade+"/":"")+ship.uf+") - Frete estimado: "+(fv===0?"grátis":fmt.format(fv))+"\n";
+  t+="Total: "+fmt.format(subtotal()+(fv||0));
   return t;
 }
 function waLink(texto){ return "https://wa.me/"+CONFIG.whatsapp.replace(/\D/g,"")+(texto?"?text="+encodeURIComponent(texto):""); }
@@ -916,10 +933,13 @@ function renderCart(){
   }).join("");
   var f=CONFIG.freteGratisAcima;
   if(f>0){ var falta=f-st; $("#shipBox").innerHTML= falta>0 ? 'Faltam <b>'+fmt.format(falta)+'</b> para ganhar frete grátis.<div class="bar"><i style="width:'+Math.min(100,st/f*100)+'%"></i></div>' : '<b style="color:var(--ok)">Você ganhou frete grátis!</b><div class="bar"><i style="width:100%"></i></div>'; } else $("#shipBox").innerHTML="";
-  var h='<div class="row"><span>Subtotal</span><span>'+fmt.format(st)+'</span></div>';
-  if(CONFIG.pixDesconto>0) h+='<div class="row" style="color:var(--ok)"><span>No Pix ('+CONFIG.pixDesconto+'% off)</span><span>'+fmt.format(st*(1-CONFIG.pixDesconto/100))+'</span></div>';
-  h+='<div class="row total"><span>Total</span><span>'+fmt.format(st)+'</span></div><small>Frete e prazo confirmados no atendimento.</small>';
-  if(CONFIG.pixApi) h+='<button class="btn pixbtn" data-pix>Pagar com Pix'+(CONFIG.pixDesconto>0?' · '+fmt.format(st*(1-CONFIG.pixDesconto/100)):'')+'</button>';
+  var fv=freteValor();
+  var h='<div class="cepbox"><label for="cep">Calcule o frete — enviamos de '+CONFIG.origemFrete+'</label><div class="ceprow"><input id="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="Seu CEP" value="'+(ship?fmtCep(ship.cep):"")+'"><button class="btn ghost" data-cep>Calcular</button></div><div id="cepmsg">'+(ship?(ship.cidade?ship.cidade+"/":"")+ship.uf+' · entrega em '+CONFIG.frete[UFREG[ship.uf]].prazo+' após a postagem':'Informe o CEP para ver o valor e o prazo.')+'</div></div>';
+  h+='<div class="row"><span>Subtotal</span><span>'+fmt.format(st)+'</span></div>';
+  h+='<div class="row"><span>Frete</span><span>'+(fv===null?'a calcular':fv===0?'<b style="color:var(--ok)">Grátis</b>':fmt.format(fv))+'</span></div>';
+  if(CONFIG.pixDesconto>0) h+='<div class="row" style="color:var(--ok)"><span>No Pix ('+CONFIG.pixDesconto+'% off nos produtos)</span><span>'+fmt.format(pixTotal())+'</span></div>';
+  h+='<div class="row total"><span>Total</span><span>'+fmt.format(st+(fv||0))+'</span></div><small>Frete estimado por região. O prazo é contado a partir da postagem.</small>';
+  if(CONFIG.pixApi) h+='<button class="btn pixbtn" data-pix>Pagar com Pix'+(CONFIG.pixDesconto>0&&ship?' · '+fmt.format(pixTotal()):'')+'</button>';
   h+='<a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a>';
   h+='<button class="copybtn" data-copy>Copiar pedido e enviar manualmente para '+fmtFone(CONFIG.whatsapp)+'</button>';
   $("#sum").innerHTML=h;
@@ -937,25 +957,39 @@ function pixSheet(html){ $("#sheet").className="sheet pix"; $("#sheet").innerHTM
 function pixErro(){
   pixSheet('<h2>Não foi possível gerar o Pix agora</h2><p style="color:var(--muted)">Seu carrinho continua salvo. Você pode finalizar pelo WhatsApp e nossa equipe envia o Pix para você.</p><a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a><button class="btn ghost" data-pix>Tentar novamente</button>');
 }
+function calcCep(){
+  var el=$("#cep"), c=(el?el.value:"").replace(/\D/g,""), msg=$("#cepmsg");
+  if(c.length!==8){ msg.textContent="Digite um CEP com 8 números."; msg.style.color="var(--accent,#b3261e)"; return; }
+  msg.textContent="Consultando CEP…"; msg.style.color="";
+  var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},8000);
+  fetch("https://viacep.com.br/ws/"+c+"/json/",{signal:ctl.signal}).then(function(r){return r.json()}).then(function(d){
+    clearTimeout(to);
+    if(!d||d.erro||!UFREG[d.uf]){ msg.textContent="CEP não encontrado. Confira os números."; msg.style.color="var(--accent,#b3261e)"; return; }
+    ship={cep:c,uf:d.uf,cidade:d.localidade||""};
+    try{ localStorage.setItem("mn-cep",JSON.stringify(ship)); }catch(e){}
+    renderCart(); toast("Frete calculado");
+  }).catch(function(){ clearTimeout(to); msg.textContent="Não foi possível consultar o CEP agora. Tente de novo ou fale no WhatsApp."; msg.style.color="var(--accent,#b3261e)"; });
+}
 function pagarPix(){
   if(!cart.length) return;
+  if(!ship){ toast("Calcule o frete com seu CEP antes de pagar com Pix"); var ce=$("#cep"); if(ce) ce.focus(); return; }
   clearInterval(pixTimer);
   pixSheet('<h2>Gerando seu Pix…</h2><p style="color:var(--muted)">Aguarde um instante.</p>');
   var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},20000);
-  fetch(CONFIG.pixApi.replace(/\/$/,"")+"/pix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({itens:cart.map(function(i){return{id:i.id,qty:i.qty}})}),signal:ctl.signal})
+  fetch(CONFIG.pixApi.replace(/\/$/,"")+"/pix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cep:ship.cep,itens:cart.map(function(i){return{id:i.id,qty:i.qty}})}),signal:ctl.signal})
     .then(function(r){return r.json()})
     .then(function(d){ clearTimeout(to); if(!d||!d.ok||(!d.code&&!d.qr)) throw new Error("pix"); mostrarPix(d); })
     .catch(function(){ clearTimeout(to); pixErro(); });
 }
 function mostrarPix(d){
   var total=fmt.format(d.total);
-  var msg="Olá! Acabei de pagar o Pix do pedido "+d.pedido+" ("+total+") na Magia Natalina.\n"+cart.map(function(i){var p=prod(i.id);return "- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"");}).join("\n")+"\nPodem confirmar e combinar o frete?";
-  var h='<h2>Pague com Pix</h2><div style="font-size:1.6rem;font-weight:800">'+total+'</div><small style="margin:0">Pedido '+hx(d.pedido)+' · já com '+CONFIG.pixDesconto+'% de desconto</small>';
+  var msg="Olá! Acabei de pagar o Pix do pedido "+d.pedido+" ("+total+") na Magia Natalina.\n"+cart.map(function(i){var p=prod(i.id);return "- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"");}).join("\n")+"\nCEP "+fmtCep(ship.cep)+". Podem confirmar o pedido?";
+  var h='<h2>Pague com Pix</h2><div style="font-size:1.6rem;font-weight:800">'+total+'</div><small style="margin:0">Pedido '+hx(d.pedido)+' · produtos com '+CONFIG.pixDesconto+'% de desconto + frete '+(d.frete===0?'grátis':fmt.format(d.frete||0))+'</small>';
   h+='<div class="qr" id="pixqr"></div>';
   if(d.code) h+='<textarea class="code" id="pixcode" readonly aria-label="Pix copia e cola">'+hx(d.code)+'</textarea><button class="btn pixbtn" data-pixcopy>Copiar código Pix</button>';
   h+='<div class="tempo" id="pixtempo"></div>';
   h+='<a class="btn wa" href="'+waLink(msg)+'" target="_blank" rel="noopener">Já paguei — avisar no WhatsApp</a>';
-  h+='<small>Abra o app do seu banco, escolha Pix → QR Code ou copia e cola. O frete e o prazo são confirmados no WhatsApp'+(subtotal()>=CONFIG.freteGratisAcima?' (seu pedido tem frete grátis).':'.')+'</small>';
+  h+='<small>Abra o app do seu banco, escolha Pix → QR Code ou copia e cola. O frete já está incluso. Entrega em '+CONFIG.frete[UFREG[ship.uf]].prazo+' após a postagem.</small>';
   pixSheet(h);
   var box=$("#pixqr");
   if(d.qr){ var im=new Image(); im.alt="QR Code Pix"; im.src=d.qr; box.appendChild(im); }
@@ -975,7 +1009,7 @@ function openProd(id){
 
 /* ---------- eventos ---------- */
 document.addEventListener("click",function(e){
-  var t=e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-pix],[data-pixcopy],[data-close-cart],[data-close-modal],[data-img]");
+  var t=e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-cep],[data-pix],[data-pixcopy],[data-close-cart],[data-close-modal],[data-img]");
   if(!t){ if(e.target.id==="modal"||e.target.id==="veil") closeAll(); return; }
   var d=t.dataset;
   if(d.add){ addCart(d.add); if(t.hasAttribute("data-then-cart")){ $("#modal").classList.remove("on"); openCart(); } }
@@ -986,6 +1020,7 @@ document.addEventListener("click",function(e){
   else if(d.inc) setQty(d.inc,1);
   else if(d.dec) setQty(d.dec,-1);
   else if(d.rm) setQty(d.rm,-999);
+  else if(t.hasAttribute("data-cep")) calcCep();
   else if(t.hasAttribute("data-pix")) pagarPix();
   else if(t.hasAttribute("data-pixcopy")){
     var c=$("#pixcode"), okp=function(){toast("Código Pix copiado")}, nop=function(){ try{c.focus();c.select();}catch(e){} toast("Selecione e copie o código manualmente"); };
@@ -999,7 +1034,8 @@ document.addEventListener("click",function(e){
   else if(t.hasAttribute("data-close-cart")||t.hasAttribute("data-close-modal")) closeAll();
 });
 document.addEventListener("change",function(e){ if(e.target.id==="sort"){ ordem=e.target.value; renderGrid(); } });
-document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeAll(); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeAll(); if(e.key==="Enter"&&e.target.id==="cep") calcCep(); });
+document.addEventListener("input",function(e){ if(e.target.id==="cep"){ var v=e.target.value.replace(/\D/g,"").slice(0,8); e.target.value=v.length>5?v.slice(0,5)+"-"+v.slice(5):v; } });
 $("#openCart").addEventListener("click",openCart);
 $("#closeCart").addEventListener("click",closeAll);
 
