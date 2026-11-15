@@ -954,8 +954,8 @@ var tt; function toast(m){ var t=$("#toast"); t.textContent=m; t.classList.add("
 var pixTimer=null;
 function hx(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function pixSheet(html){ $("#sheet").className="sheet pix"; $("#sheet").innerHTML='<button class="x" data-close-modal aria-label="Fechar">×</button>'+html; $("#modal").classList.add("on"); $("#veil").classList.add("on"); }
-function pixErro(){
-  pixSheet('<h2>Não foi possível gerar o Pix agora</h2><p style="color:var(--muted)">Seu carrinho continua salvo. Você pode finalizar pelo WhatsApp e nossa equipe envia o Pix para você.</p><a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a><button class="btn ghost" data-pix>Tentar novamente</button>');
+function pixErro(cod){
+  pixSheet('<h2>Não foi possível gerar o Pix agora</h2><p style="color:var(--muted)">Seu carrinho continua salvo. Você pode finalizar pelo WhatsApp e nossa equipe envia o Pix para você.</p><a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a><button class="btn ghost" data-pix>Tentar novamente</button>'+(cod?'<small>Código do erro: '+hx(String(cod).slice(0,260))+'</small>':''));
 }
 function calcCep(){
   var el=$("#cep"), c=(el?el.value:"").replace(/\D/g,""), msg=$("#cepmsg");
@@ -978,8 +978,8 @@ function pagarPix(){
   var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},20000);
   fetch(CONFIG.pixApi.replace(/\/$/,"")+"/pix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cep:ship.cep,itens:cart.map(function(i){return{id:i.id,qty:i.qty}})}),signal:ctl.signal})
     .then(function(r){return r.json()})
-    .then(function(d){ clearTimeout(to); if(!d||!d.ok||(!d.code&&!d.qr)) throw new Error("pix"); mostrarPix(d); })
-    .catch(function(){ clearTimeout(to); pixErro(); });
+    .then(function(d){ clearTimeout(to); if(!d||!d.ok||(!d.code&&!d.qr)){ var er=new Error((d&&d.erro||"resposta")+(d&&d.status?" "+d.status:"")+(d&&d.detalhe?" - "+d.detalhe:"")); throw er; } mostrarPix(d); })
+    .catch(function(e){ clearTimeout(to); pixErro(e&&e.message&&e.message!=="Failed to fetch"?e.message:"sem_conexao_com_o_servidor (origem bloqueada ou servidor fora do ar)"); });
 }
 function mostrarPix(d){
   var total=fmt.format(d.total);
