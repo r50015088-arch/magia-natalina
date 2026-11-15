@@ -3,15 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#741223">
   <title>Magia Natalina</title>
   <style>
     body{font-family:system-ui,sans-serif;max-width:42rem;margin:10vh auto;padding:0 1.25rem;color:#2a1519;line-height:1.55}
     a{color:#8b1a2b}
+    #checkout-link{position:fixed;right:18px;bottom:18px;z-index:9999;padding:14px 20px;border-radius:999px;background:#1f7a4d;color:#fff;text-decoration:none;font-weight:700;box-shadow:0 4px 18px #0004}
   </style>
 </head>
 <body>
   <p>Restaurando a loja…</p>
-  <p id="status">Carregando a versão anterior estável do site.</p>
+  <p id="status">Carregando a versão estável do site.</p>
+  <p><a href="/checkout.html">Ir direto para o checkout</a></p>
   <script>
     (async function () {
       var url = 'https://raw.githubusercontent.com/r50015088-arch/magia-natalina/906259e8e4ea4013f239d051eec37714f66a4fb3/index.html';
@@ -19,11 +22,12 @@
         var response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) throw new Error('Não foi possível carregar a versão estável.');
         var html = await response.text();
+        html += '<a id="checkout-link" href="/checkout.html">Finalizar compra · Pix</a>';
         document.open();
         document.write(html);
         document.close();
       } catch (error) {
-        document.getElementById('status').textContent = 'A restauração automática falhou. Abra o arquivo index.html no GitHub e reverta o commit 454ee455437f1553f561419be48f6fc116a17d62 para recuperar a versão anterior.';
+        document.getElementById('status').textContent = 'Não foi possível carregar a loja automaticamente. Você ainda pode acessar o checkout pelo link acima ou abrir a versão estável no GitHub.';
       }
     })();
   </script>

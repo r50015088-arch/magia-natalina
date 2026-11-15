@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#741223">
+  <title>Finalizar compra | Magia Natalina</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#2a1519;background:#faf5f4;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;line-height:1.5}.wrap{max-width:980px;margin:auto;padding:28px 18px 60px}
+    a{color:#8b1a2b}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-family:Georgia,serif;font-size:1.4rem;text-decoration:none;font-weight:700}
+    h1,h2{font-family:Georgia,serif;font-weight:500;line-height:1.15}h1{font-size:clamp(2rem,5vw,3rem);margin:.2rem 0}.muted{color:#6c5156}
+    .layout{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}.card{background:white;border:1px solid #e9dcd8;border-radius:18px;padding:22px;box-shadow:0 8px 26px #3a11120a}
+    .items{display:grid;gap:12px;margin:18px 0}.item{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #eee5e2;padding-bottom:10px}.item small{display:block;color:#6c5156}.total{display:flex;justify-content:space-between;font-weight:800;font-size:1.2rem;padding-top:12px}
+    label{display:block;font-weight:650;margin:14px 0 6px}input{width:100%;font:inherit;padding:12px;border:1px solid #d8c8c4;border-radius:10px;background:#fff;color:inherit}input:focus{outline:3px solid #d4a23a66;border-color:#8b1a2b}
+    button,.btn{font:inherit;font-weight:750;border:0;border-radius:999px;padding:13px 18px;background:#8b1a2b;color:white;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;min-height:48px}
+    button:disabled{opacity:.6;cursor:wait}.wide{width:100%;margin-top:18px}.notice{padding:12px;border-radius:10px;background:#f6eeeb;color:#6c5156;margin-top:12px}.error{background:#fff0ee;color:#8b1a2b}.pix-result{display:none;margin-top:20px;border-top:1px solid #e9dcd8;padding-top:20px}.pix-result.show{display:block}.qr{display:block;max-width:240px;width:100%;margin:14px auto;border:1px solid #eee;padding:8px;border-radius:10px}.code{width:100%;min-height:95px;resize:vertical;font: .85rem ui-monospace,monospace;padding:10px;border:1px solid #d8c8c4;border-radius:10px}.actions{display:grid;gap:10px}.secondary{background:#1f7a4d}.empty{text-align:center;padding:24px}
+    @media(max-width:700px){.layout{grid-template-columns:1fr}.wrap{padding-top:18px}.card{padding:18px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top"><a class="brand" href="/">✦ Magia Natalina</a><a href="/">← Voltar à loja</a></header>
+    <h1>Finalizar compra</h1>
+    <p class="muted">Confira seu pedido e gere um Pix seguro para concluir.</p>
+    <div class="layout" style="margin-top:22px">
+      <section class="card" aria-labelledby="order-title">
+        <h2 id="order-title">Seu pedido</h2>
+        <div id="items" class="items"></div>
+        <div class="total"><span>Total</span><span id="total">R$ 0,00</span></div>
+        <p class="muted" style="font-size:.9rem;margin-top:8px">O frete e o prazo de entrega são combinados após a confirmação do pedido.</p>
+      </section>
+      <section class="card" aria-labelledby="customer-title">
+        <h2 id="customer-title">Seus dados</h2>
+        <form id="form">
+          <label for="name">Nome completo</label><input id="name" name="name" autocomplete="name" maxlength="120" required>
+          <label for="cpf">CPF</label><input id="cpf" name="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required>
+          <label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required>
+          <button id="submit" class="wide" type="submit">Gerar Pix</button>
+        </form>
+        <div id="message" class="notice" role="status" hidden></div>
+        <div id="pix-result" class="pix-result" aria-live="polite">
+          <h2>Pix gerado</h2><p id="pix-total" class="muted"></p><img id="qr" class="qr" alt="QR Code Pix" hidden>
+          <label for="pix-code">Pix copia e cola</label><textarea id="pix-code" class="code" readonly></textarea>
+          <div class="actions"><button id="copy" class="secondary" type="button">Copiar código Pix</button></div>
+          <p class="muted" style="font-size:.85rem;margin-top:12px">O pagamento será confirmado pelo provedor. Não feche esta página antes de copiar o código.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+<script>
+(function(){
+  'use strict';
+  var catalog = {
+    'tapete-de-entrada-tradicional-com-design-de-floco-de-neve-e-':['Tapete de Entrada Tradicional com Design de Floco de Neve e Estrela Dourada',177.80],
+    'festao-de-natal-verde-com-lacos':['Festão de Natal Verde com Laços',77.68],
+    'capa-natalina-para-micro-ondas':['Capa Natalina para Micro-ondas',74.98],
+    'cordao-de-luzes-led-solar-em-formato-de-cogumelos':['Cordão de Luzes LED Solar em Formato de Cogumelos',161.38],
+    'projetor-led-natalino-com-papai-noel-e-arvore-de-natal':['Projetor LED Natalino com Papai Noel e Árvore de Natal',108.75],
+    'cordao-de-luzes-led-cogumelos':['Cordão de Luzes LED Cogumelos',96.92],
+    'cordao-de-luzes-led-solar-em-fio-de-cobre':['Cordão de Luzes LED Solar em Fio de Cobre',71.50],
+    'luminaria-de-jardim-em-forma-de-treno-de-papai-noel-luz-sola':['Luminária de Jardim em Forma de Trenó de Papai Noel',298.85],
+    'cascata-de-luzes-led-natalinas-gotas-de-gelo':['Cascata de Luzes LED Natalinas Gotas de Gelo',119.35],
+    'cordao-de-luzes-led-com-folhas-verdes':['Cordão de Luzes LED com Folhas Verdes',127.67],
+    'mini-enfeite-natalino-papai-noel-vermelho':['Mini Enfeite Natalino Papai Noel Vermelho',30.08],
+    'arvore-de-natal-de-feltro-infantil-diy-com-enfeites-decorati':['Árvore de Natal de Feltro Infantil DIY com Enfeites Decorativos',132.58],
+    'calendario-do-advento-com-cena-de-natal-24-figuras-de-acrili':['Calendário do Advento com Cena de Natal',151.03],
+    'papai-noel-escalando-com-luzes-led':['Papai Noel Escalando com Luzes LED',220.55],
+    'enfeite-natalino-de-madeira-para-canto-de-porta':['Enfeite Natalino de Madeira para Canto de Porta',78.04],
+    'enfeites-natalinos-pendentes':['Enfeites Natalinos Pendentes',75.95],
+    'kit-4-capas-de-almofada-natalinas-45x45cm-em-poliester':['Kit 4 Capas de Almofada Natalinas',134.60],
+    'enfeite-natalino-iluminado-com-led-para-porta':['Enfeite Natalino Iluminado com LED para Porta',180.98],
+    'kit-de-decoracao-natalina-para-banheiro':['Kit de Decoração Natalina para Banheiro',161.65],
+    'caneca-de-cafe-de-papai-noel-500ml-caneca-de-ceramica-com-de':['Caneca de Café de Papai Noel 500ML',109.78],
+    'kit-com-10-enfeites-natalinos-de-madeira':['Kit com 10 Enfeites Natalinos de Madeira',92.57],
+    'boneco-natalino-telescopico-de-pelucia':['Boneco Natalino Telescópico de Pelúcia',177.35],
+    'kit-com-10-ou-20-flores-de-natal-artificiais-com-glitter-14-':['Kit de Flores de Natal Artificiais com Glitter',104.45],
+    'estrela-de-belem-natalina-iluminada-com-led':['Estrela de Belém Natalina Iluminada com LED',209.98],
+    'mini-papai-noel-para-monitor-tv':['Mini Papai Noel para Monitor/TV',49.90],
+    'calendario-do-advento-em-forma-de-chamine-lareira-com-papai-':['Calendário do Advento em Forma de Chaminé',189.90],
+    'estatua-de-anjo-querubim-branco-pensativo':['Estátua de Anjo Querubim Branco Pensativo',79.90],
+    'boneco-de-neve-mini-com-cartola-e-cachecol':['Boneco de Neve Mini com Cartola e Cachecol',45.90],
+    'estatua-de-rena-branca-com-cachecol':['Estátua de Rena Branca com Cachecol',89.90],
+    'anjo-branco-orando':['Anjo Branco Orando',69.90],
+    'treno-vermelho-decorativo-de-natal':['Trenó Vermelho Decorativo de Natal',59.90],
+    'letras-3d-feliz-natal-vermelhas-com-floco-de-neve':['Letras 3D Feliz Natal Vermelhas',74.90],
+    'arvores-de-natal-de-papel-acordeao':['Árvores de Natal de Papel Acordeão',54.90],
+    'anjo-led-dourado-com-cauda-de-estrelas':['Anjo LED Dourado com Cauda de Estrelas',99.90],
+    'mini-arvore-de-natal-com-laco-vermelho-e-bolas-douradas':['Mini Árvore de Natal com Laço Vermelho',67.90],
+    'presepio-kit-natividade-completo-com-figuras':['Presépio / Kit Natividade Completo',129.90],
+    'kit-de-blocos-de-montar-treno-merry-christmas':['Kit de Blocos de Montar Trenó Merry Christmas',79.90],
+    'caixa-de-presente-decorativa-com-pernas-e-rosto':['Caixa de Presente Decorativa com Pernas e Rosto',39.90]
+  };
+  var money = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var items = [];
+  try { items = JSON.parse(localStorage.getItem('mn-cart') || '[]'); } catch(e) { items = []; }
+  if (!Array.isArray(items)) items = [];
+  items = items.filter(function(i){return i && catalog[i.id] && Number.isInteger(Number(i.qty)) && Number(i.qty)>0 && Number(i.qty)<=10;});
+  var itemBox=document.getElementById('items'), totalBox=document.getElementById('total'), submit=document.getElementById('submit');
+  var total=items.reduce(function(sum,i){return sum+catalog[i.id][1]*Number(i.qty);},0);
+  if (!items.length) {
+    itemBox.innerHTML='<div class="empty"><p>Seu carrinho está vazio.</p><p><a href="/#catalogo">Voltar à loja e escolher produtos</a></p></div>';
+    submit.disabled=true;
+  } else {
+    itemBox.innerHTML=items.map(function(i){var p=catalog[i.id];return '<div class="item"><span>'+p[0]+'<small>Quantidade: '+Number(i.qty)+'</small></span><strong>'+money.format(p[1]*Number(i.qty))+'</strong></div>';}).join('');
+  }
+  totalBox.textContent=money.format(total);
+  var message=document.getElementById('message');
+  function showMessage(text,error){message.textContent=text;message.hidden=false;message.classList.toggle('error',!!error);}
+  document.getElementById('cpf').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').slice(0,11);this.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');});
+  document.getElementById('form').addEventListener('submit',async function(e){
+    e.preventDefault(); if(!items.length)return;
+    submit.disabled=true;submit.textContent='Gerando Pix…';message.hidden=true;
+    try {
+      var response=await fetch('/api/create-pix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:items.map(function(i){return {id:i.id,qty:Number(i.qty)};}),payer:{name:document.getElementById('name').value.trim(),cpf:document.getElementById('cpf').value.replace(/\D/g,''),email:document.getElementById('email').value.trim()}})});
+      var data=await response.json().catch(function(){return {};});
+      if(!response.ok)throw new Error(data.message||data.error||'Não foi possível gerar o Pix.');
+      var code=data.pix_copy_paste||'';
+      var qr=document.getElementById('qr');
+      if(data.qr_code_base64){qr.src=data.qr_code_base64.indexOf('data:')===0?data.qr_code_base64:'data:image/png;base64,'+data.qr_code_base64;qr.hidden=false;}
+      else if(data.qr_code&&/^https:\/\//.test(data.qr_code)){qr.src=data.qr_code;qr.hidden=false;}
+      else qr.hidden=true;
+      document.getElementById('pix-code').value=code;
+      document.getElementById('pix-total').textContent='Valor: '+money.format(Number(data.amount||total));
+      document.getElementById('pix-result').classList.add('show');
+      if(!code&&!data.qr_code_base64&&!data.qr_code)showMessage('Cobrança criada, mas o provedor não retornou o QR Code nem o código Pix. Entre em contato com a loja antes de pagar.',true);
+      else document.getElementById('pix-result').scrollIntoView({behavior:'smooth',block:'center'});
+    } catch(err) { showMessage(err.message||'Erro inesperado. Tente novamente.',true); }
+    finally { submit.disabled=false;submit.textContent='Gerar Pix'; }
+  });
+  document.getElementById('copy').addEventListener('click',async function(){var text=document.getElementById('pix-code').value;if(!text){showMessage('O provedor não retornou um código Pix para copiar.',true);return;}try{await navigator.clipboard.writeText(text);this.textContent='Código copiado!';}catch(e){document.getElementById('pix-code').select();showMessage('Selecione e copie o código Pix manualmente.');}});
+})();
+</script>
+</body>
+</html>
