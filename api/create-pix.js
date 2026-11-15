@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 const PRODUCTS = {
   'tapete-de-entrada-tradicional-com-design-de-floco-de-neve-e-': { name: 'Tapete de Entrada Tradicional com Design de Floco de Neve e Estrela Dourada', price: 177.80 },
   'festao-de-natal-verde-com-lacos': { name: 'Festão de Natal Verde com Laços', price: 77.68 },
