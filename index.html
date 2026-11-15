@@ -175,6 +175,16 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 .sum .row{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
 .sum .total{font-size:1.2rem;font-weight:700}
 .sum small{color:var(--muted)}
+.btn.pixbtn{background:#0b7a75;color:#fff}
+.sheet.pix{display:block;max-width:440px;padding:1.4rem 1.2rem 1.2rem;text-align:center}
+.sheet.pix h2{margin:.2rem 0 .3rem}
+.pix .qr{background:#fff;border-radius:12px;padding:10px;display:inline-block;margin:.6rem 0}
+.pix .qr[hidden]{display:none}
+.pix .qr img,.pix .qr canvas{display:block;width:210px;height:210px}
+.pix .code{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line,#8884);border-radius:10px;padding:.6rem;background:transparent;color:var(--fg);resize:none;height:84px}
+.pix .tempo{color:var(--muted);font-size:.9rem;margin:.4rem 0}
+.pix .btn{width:100%;margin-top:.5rem}
+.pix small{display:block;color:var(--muted);margin-top:.6rem}
 .copybtn{background:none;border:0;text-decoration:underline;color:var(--muted);font-size:.88rem}
 .modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
 .modal.on{display:flex}
@@ -265,12 +275,14 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Detalhes do produto"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script>
 /* ===== AJUSTE AQUI ===== */
 var CONFIG = {
   whatsapp: "5513981523560",            // troque pelo número real (DDI+DDD+número, só dígitos)
   email: "",                            // opcional
   cnpj: "",                             // opcional
+  pixApi: "https://magia-pix06a4.r50015088.workers.dev",   // servidor do Pix (Cloudflare). Vazio = esconde o botao
   pixDesconto: 5,                       // % de desconto no Pix (0 para desligar)
   parcelasMax: 12,                      // máximo de parcelas sem juros
   parcelaMinima: 5,                     // valor mínimo de cada parcela (R$)
@@ -907,6 +919,7 @@ function renderCart(){
   var h='<div class="row"><span>Subtotal</span><span>'+fmt.format(st)+'</span></div>';
   if(CONFIG.pixDesconto>0) h+='<div class="row" style="color:var(--ok)"><span>No Pix ('+CONFIG.pixDesconto+'% off)</span><span>'+fmt.format(st*(1-CONFIG.pixDesconto/100))+'</span></div>';
   h+='<div class="row total"><span>Total</span><span>'+fmt.format(st)+'</span></div><small>Frete e prazo confirmados no atendimento.</small>';
+  if(CONFIG.pixApi) h+='<button class="btn pixbtn" data-pix>Pagar com Pix'+(CONFIG.pixDesconto>0?' · '+fmt.format(st*(1-CONFIG.pixDesconto/100)):'')+'</button>';
   h+='<a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a>';
   h+='<button class="copybtn" data-copy>Copiar pedido e enviar manualmente para '+fmtFone(CONFIG.whatsapp)+'</button>';
   $("#sum").innerHTML=h;
@@ -914,19 +927,55 @@ function renderCart(){
 function addCart(id){ var it=cart.filter(function(i){return i.id===id})[0]; if(it) it.qty++; else cart.push({id:id,qty:1}); save(); renderCart(); toast("Adicionado ao carrinho"); }
 function setQty(id,d){ var it=cart.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty+=d; if(it.qty<1) cart=cart.filter(function(i){return i.id!==id}); save(); renderCart(); }
 function openCart(){ $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden","false"); $("#veil").classList.add("on"); }
-function closeAll(){ $("#drawer").classList.remove("on"); $("#drawer").setAttribute("aria-hidden","true"); $("#veil").classList.remove("on"); $("#modal").classList.remove("on"); }
+function closeAll(){ $("#drawer").classList.remove("on"); $("#drawer").setAttribute("aria-hidden","true"); $("#veil").classList.remove("on"); $("#modal").classList.remove("on"); clearInterval(pixTimer); }
 var tt; function toast(m){ var t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on")},1800); }
+
+/* ---------- pix ---------- */
+var pixTimer=null;
+function hx(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function pixSheet(html){ $("#sheet").className="sheet pix"; $("#sheet").innerHTML='<button class="x" data-close-modal aria-label="Fechar">×</button>'+html; $("#modal").classList.add("on"); $("#veil").classList.add("on"); }
+function pixErro(){
+  pixSheet('<h2>Não foi possível gerar o Pix agora</h2><p style="color:var(--muted)">Seu carrinho continua salvo. Você pode finalizar pelo WhatsApp e nossa equipe envia o Pix para você.</p><a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a><button class="btn ghost" data-pix>Tentar novamente</button>');
+}
+function pagarPix(){
+  if(!cart.length) return;
+  clearInterval(pixTimer);
+  pixSheet('<h2>Gerando seu Pix…</h2><p style="color:var(--muted)">Aguarde um instante.</p>');
+  var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},20000);
+  fetch(CONFIG.pixApi.replace(/\/$/,"")+"/pix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({itens:cart.map(function(i){return{id:i.id,qty:i.qty}})}),signal:ctl.signal})
+    .then(function(r){return r.json()})
+    .then(function(d){ clearTimeout(to); if(!d||!d.ok||(!d.code&&!d.qr)) throw new Error("pix"); mostrarPix(d); })
+    .catch(function(){ clearTimeout(to); pixErro(); });
+}
+function mostrarPix(d){
+  var total=fmt.format(d.total);
+  var msg="Olá! Acabei de pagar o Pix do pedido "+d.pedido+" ("+total+") na Magia Natalina.\n"+cart.map(function(i){var p=prod(i.id);return "- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"");}).join("\n")+"\nPodem confirmar e combinar o frete?";
+  var h='<h2>Pague com Pix</h2><div style="font-size:1.6rem;font-weight:800">'+total+'</div><small style="margin:0">Pedido '+hx(d.pedido)+' · já com '+CONFIG.pixDesconto+'% de desconto</small>';
+  h+='<div class="qr" id="pixqr"></div>';
+  if(d.code) h+='<textarea class="code" id="pixcode" readonly aria-label="Pix copia e cola">'+hx(d.code)+'</textarea><button class="btn pixbtn" data-pixcopy>Copiar código Pix</button>';
+  h+='<div class="tempo" id="pixtempo"></div>';
+  h+='<a class="btn wa" href="'+waLink(msg)+'" target="_blank" rel="noopener">Já paguei — avisar no WhatsApp</a>';
+  h+='<small>Abra o app do seu banco, escolha Pix → QR Code ou copia e cola. O frete e o prazo são confirmados no WhatsApp'+(subtotal()>=CONFIG.freteGratisAcima?' (seu pedido tem frete grátis).':'.')+'</small>';
+  pixSheet(h);
+  var box=$("#pixqr");
+  if(d.qr){ var im=new Image(); im.alt="QR Code Pix"; im.src=d.qr; box.appendChild(im); }
+  else if(window.QRCode&&d.code){ try{ new QRCode(box,{text:d.code,width:210,height:210,correctLevel:QRCode.CorrectLevel.L}); }catch(e){ box.hidden=true; } }
+  else box.hidden=true;
+  var fim=Date.now()+30*60*1000, el=$("#pixtempo");
+  function t(){ var s=Math.max(0,Math.round((fim-Date.now())/1000)); el.textContent= s>0 ? "Este Pix vale por "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0") : "Este Pix expirou. Feche e gere um novo."; if(s<=0) clearInterval(pixTimer); }
+  t(); pixTimer=setInterval(t,1000);
+}
 
 /* ---------- produto ---------- */
 function openProd(id){
-  var p=prod(id);
+  var p=prod(id); $("#sheet").className="sheet";
   $("#sheet").innerHTML='<button class="x" data-close-modal aria-label="Fechar">×</button>'+galeria(p)+'<div class="info"><span class="cat-name eyebrow">'+catNome(p.cat)+'</span><h2>'+(p.nomeCompleto||p.nome)+'</h2><p style="color:var(--muted)">'+p.desc+'</p>'+(p.variacoes?'<p style="font-size:.9rem"><b>Opções disponíveis:</b> '+p.variacoes+'. A escolha é feita no atendimento.</p>':'')+'<div class="price">'+precoHTML(p)+'</div><ul><li>Entrega para todo o Brasil</li><li>Parcelamento sem juros em todos os cartões</li><li>Troca em até 7 dias, sem uso e na embalagem original</li></ul><button class="btn" data-add="'+p.id+'" data-then-cart>Adicionar ao carrinho</button><a class="btn ghost" href="'+waLink("Olá! Tenho uma dúvida sobre: "+p.nome)+'" target="_blank" rel="noopener">Tirar dúvida no WhatsApp</a></div>';
   $("#modal").classList.add("on"); $("#veil").classList.add("on");
 }
 
 /* ---------- eventos ---------- */
 document.addEventListener("click",function(e){
-  var t=e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-close-cart],[data-close-modal],[data-img]");
+  var t=e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-pix],[data-pixcopy],[data-close-cart],[data-close-modal],[data-img]");
   if(!t){ if(e.target.id==="modal"||e.target.id==="veil") closeAll(); return; }
   var d=t.dataset;
   if(d.add){ addCart(d.add); if(t.hasAttribute("data-then-cart")){ $("#modal").classList.remove("on"); openCart(); } }
@@ -937,6 +986,11 @@ document.addEventListener("click",function(e){
   else if(d.inc) setQty(d.inc,1);
   else if(d.dec) setQty(d.dec,-1);
   else if(d.rm) setQty(d.rm,-999);
+  else if(t.hasAttribute("data-pix")) pagarPix();
+  else if(t.hasAttribute("data-pixcopy")){
+    var c=$("#pixcode"), okp=function(){toast("Código Pix copiado")}, nop=function(){ try{c.focus();c.select();}catch(e){} toast("Selecione e copie o código manualmente"); };
+    try{ navigator.clipboard.writeText(c.value).then(okp,nop); }catch(err){ nop(); }
+  }
   else if(t.hasAttribute("data-copy")){
     var txt=pedidoTexto();
     var ok=function(){toast("Pedido copiado")}, no=function(){toast("Não foi possível copiar. Selecione o texto manualmente.")};
