@@ -1,969 +1,200 @@
-<title>Magia Natalina</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito+Sans:wght@400;600;700&display=swap">
-<style>
-/* Layout: faixa de urgência, topo fixo, hero vinho com guirlanda de enfeites, benefícios em texto, categorias, vitrine com filtros, compra segura, FAQ, rodapé. Carrinho em gaveta que fecha o pedido pelo WhatsApp. */
-:root{
-  --bg:#faf5f4; --surface:#ffffff; --fg:#2a1519; --muted:#6c5156; --line:#e9dcd8;
-  --brand:#8b1a2b; --brand-ink:#ffffff; --gold:#8a6212; --gold-fill:#d4a23a; --green:#1f4d3a;
-  --hero-bg:#741223; --hero-fg:#fff7f2; --art-bg:#f3e5e0; --ok:#1c6b4a;
-  --display:'Marcellus','Georgia',serif; --body:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#190b0e; --surface:#261318; --fg:#f6ebe8; --muted:#c5aaae; --line:#3d252b;
-    --brand:#b02a40; --gold:#e3b95f; --gold-fill:#d4a23a; --green:#7cc2a1;
-    --hero-bg:#3d0a15; --art-bg:#38202a; --ok:#6fcf9f; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#190b0e; --surface:#261318; --fg:#f6ebe8; --muted:#c5aaae; --line:#3d252b;
-  --brand:#b02a40; --gold:#e3b95f; --gold-fill:#d4a23a; --green:#7cc2a1;
-  --hero-bg:#3d0a15; --art-bg:#38202a; --ok:#6fcf9f; color-scheme:dark;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
-.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.15;text-wrap:balance;margin:0}
-h2{font-size:clamp(1.7rem,4vw,2.3rem)}
-p{margin:0}
-a{color:inherit}
-button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--gold-fill);outline-offset:2px}
-.eyebrow{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--gold)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:0;border-radius:999px;padding:.8rem 1.5rem;font-weight:700;background:var(--brand);color:var(--brand-ink);text-decoration:none;min-height:46px}
-.btn:hover{filter:brightness(1.1)}
-.btn.gold{background:var(--gold-fill);color:#2a1519}
-.btn.ghost{background:transparent;color:inherit;border:1.5px solid currentColor}
-.btn.wa{background:#1f7a4d;color:#fff}
+const CHECKOUT_TOGGLE = false;
 
-/* faixa de urgência */
-.promo{background:var(--green);color:#fff;font-size:.9rem}
-.promo .wrap{display:flex;flex-wrap:wrap;gap:.25rem 1rem;justify-content:center;align-items:center;padding-block:.55rem;text-align:center}
-.promo b{font-variant-numeric:tabular-nums;letter-spacing:.03em}
-:root[data-theme="dark"] .promo{color:#fff}
-
-/* topo */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--bg);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:1rem;padding-block:.7rem}
-.logo{font-family:var(--display);font-size:1.45rem;text-decoration:none;color:var(--brand);display:flex;align-items:center;gap:.5rem;margin-right:auto}
-:root[data-theme="dark"] .logo{color:var(--gold)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo{color:var(--gold)}}
-.nav{display:flex;gap:1.2rem}
-.nav a{text-decoration:none;font-weight:600;font-size:.95rem;color:var(--muted)}
-.nav a:hover{color:var(--fg)}
-.cart-btn{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.5rem 1rem;display:flex;gap:.5rem;align-items:center;font-weight:700;min-height:44px}
-.cart-btn .n{background:var(--brand);color:#fff;border-radius:999px;min-width:22px;height:22px;display:inline-grid;place-items:center;font-size:.8rem;padding:0 6px}
-@media (max-width:640px){.nav{display:none}}
-@media (max-width:480px){.logo{font-size:1.15rem;white-space:nowrap}.cart-btn{padding:.5rem .8rem}}
-
-/* hero */
-.hero{background:var(--hero-bg);color:var(--hero-fg)}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:2rem;align-items:center;padding-block:clamp(2rem,6vw,4.5rem)}
-.hero h1{font-size:clamp(2.2rem,6vw,3.8rem);margin:.6rem 0 1rem}
-.hero p.lead{font-size:1.1rem;max-width:34ch;opacity:.92}
-.hero .eyebrow{color:#e8c36f}
-.hero .cta{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}
-.hero svg{width:100%;height:auto;max-width:460px;justify-self:center}
-@media (max-width:760px){.hero .wrap{grid-template-columns:1fr}.hero svg{max-width:340px}}
-
-/* benefícios */
-.perks{border-bottom:1px solid var(--line);background:var(--surface)}
-.perks ul{list-style:none;margin:0;padding:1.1rem 0;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
-.perks li{display:flex;gap:.7rem;align-items:center;min-width:0}
-.perks svg{flex:none;width:30px;height:30px;stroke:var(--brand);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-:root[data-theme="dark"] .perks svg{stroke:var(--gold)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .perks svg{stroke:var(--gold)}}
-.perks strong{display:block;font-size:.95rem;line-height:1.25}
-.perks span{font-size:.82rem;color:var(--muted);line-height:1.25;display:block}
-@media (max-width:860px){.perks ul{grid-template-columns:1fr 1fr}}
-@media (max-width:420px){.perks ul{grid-template-columns:1fr}}
-
-section{padding-block:clamp(2.2rem,6vw,3.8rem)}
-.head{display:flex;justify-content:space-between;align-items:end;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
-.head p{color:var(--muted);margin-top:.35rem}
-
-/* categorias */
-.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.9rem}
-.cat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.1rem;text-align:left;display:flex;flex-direction:column;gap:.25rem;min-height:104px}
-.cat:hover{border-color:var(--brand)}
-.cat b{font-family:var(--display);font-weight:400;font-size:1.15rem}
-.cat span{font-size:.85rem;color:var(--muted)}
-
-/* vitrine */
-.tools{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1.4rem}
-.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:.45rem .95rem;font-weight:600;font-size:.9rem;min-height:40px}
-.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
-.tools select{margin-left:auto;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:.5rem .7rem;font:inherit;min-height:40px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.1rem}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.art{background:var(--art-bg);aspect-ratio:1/1;max-width:100%;display:block;width:100%;border:0;padding:0}
-.art svg{width:100%;height:100%;display:block}
-.card .body{padding:1rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
-.card .cat-name{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
-.card h3{font-size:1.12rem;cursor:pointer}
-.card .desc{font-size:.88rem;color:var(--muted)}
-.price{margin-top:auto;padding-top:.5rem}
-.price b{font-size:1.35rem;font-variant-numeric:tabular-nums}
-.price small{display:block;color:var(--muted);font-size:.8rem}
-.price .pix{color:var(--ok);font-weight:700}
-.card .btn{width:100%;margin-top:.6rem}
-.empty{grid-column:1/-1;background:var(--surface);border:1px dashed var(--line);border-radius:16px;padding:2rem;text-align:center;color:var(--muted)}
-
-.art img{width:100%;height:100%;object-fit:cover;display:block}
-.card .desc{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.gal{min-width:0}
-.thumbs{display:flex;gap:.5rem;padding:.6rem;flex-wrap:wrap}
-.thumbs button{width:56px;height:56px;padding:0;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
-.thumbs button[aria-current="true"]{border-color:var(--brand)}
-.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
-/* compra segura */
-.safe{background:var(--surface);border-block:1px solid var(--line)}
-.safe .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.5rem}
-.safe h3{font-size:1.2rem;margin-bottom:.35rem}
-.safe p{color:var(--muted);font-size:.95rem}
-.depo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:2rem}
-.depo figure{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:1.1rem}
-.depo blockquote{margin:0 0 .6rem}
-.depo figcaption{font-size:.85rem;color:var(--muted)}
-
-/* FAQ */
-.faq{max-width:760px}
-details{border-bottom:1px solid var(--line);padding:1rem 0}
-summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:1rem}
-summary::after{content:"+";font-size:1.3rem;line-height:1;color:var(--gold)}
-details[open] summary::after{content:"–"}
-summary::-webkit-details-marker{display:none}
-details p{margin-top:.6rem;color:var(--muted)}
-
-/* rodapé */
-footer{background:var(--hero-bg);color:var(--hero-fg)}
-footer .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.8rem;padding-block:2.5rem}
-footer h3{font-size:1.1rem;margin-bottom:.5rem}
-footer p{opacity:.88;font-size:.93rem}
-footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-top:1rem;font-size:.82rem;opacity:.75}
-.numero{font-variant-numeric:tabular-nums;font-weight:700}
-
-/* WhatsApp flutuante */
-.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;background:#1f7a4d;color:#fff;border-radius:999px;padding:.85rem 1.2rem;display:flex;gap:.5rem;align-items:center;font-weight:700;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
-.fab svg{width:22px;height:22px;fill:#fff}
-@media (max-width:480px){.fab span{display:none}.fab{padding:.9rem}}
-
-/* gaveta do carrinho e produto */
-.veil{position:fixed;inset:0;background:rgba(20,6,10,.55);z-index:70;display:none}
-.veil.on{display:block}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--bg);z-index:80;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
-.drawer.on{transform:none}
-@media (prefers-reduced-motion:reduce){.drawer{transition:none}html{scroll-behavior:auto}}
-.drawer header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;border-bottom:1px solid var(--line)}
-.drawer h2{font-size:1.4rem}
-.x{background:transparent;border:0;font-size:1.8rem;line-height:1;width:44px;height:44px;border-radius:50%}
-.drawer .list{flex:1;overflow:auto;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.9rem}
-.line{display:grid;grid-template-columns:64px 1fr auto;gap:.8rem;align-items:center}
-.line .art{border-radius:10px;width:64px;height:64px;aspect-ratio:auto}
-.line b{font-size:.95rem;display:block;line-height:1.25}
-.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;margin-top:.3rem;background:var(--surface)}
-.qty button{background:none;border:0;width:34px;height:34px;font-size:1.1rem}
-.qty span{min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
-.line .rm{background:none;border:0;color:var(--muted);font-size:.8rem;text-decoration:underline}
-.ship{padding:.8rem 1.2rem;border-top:1px solid var(--line);font-size:.88rem}
-.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:.4rem}
-.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
-.sum{padding:1rem 1.2rem;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:.5rem;background:var(--surface)}
-.sum .row{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
-.sum .total{font-size:1.2rem;font-weight:700}
-.sum small{color:var(--muted)}
-.copybtn{background:none;border:0;text-decoration:underline;color:var(--muted);font-size:.88rem}
-.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
-.modal.on{display:flex}
-.sheet{background:var(--bg);border-radius:18px;max-width:820px;width:100%;max-height:100%;overflow:auto;display:grid;grid-template-columns:1fr 1fr;position:relative}
-.sheet .art{aspect-ratio:1/1;height:auto}
-.sheet .info{padding:1.6rem;display:flex;flex-direction:column;gap:.7rem;min-width:0}
-.sheet .info h2{font-size:1.7rem}
-.sheet .x{position:absolute;right:6px;top:6px;background:var(--bg)}
-.sheet ul{margin:0;padding-left:1.1rem;color:var(--muted);font-size:.92rem}
-@media (max-width:640px){.sheet{grid-template-columns:1fr}.sheet .art{height:auto}}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.6rem 1.1rem;border-radius:999px;z-index:90;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
-.toast.on{opacity:1}
-</style>
-
-<div class="promo" id="promo"><div class="wrap"><span>Peça até <span id="promoDate"></span> para receber antes do Natal</span><b id="count" aria-live="off"></b></div></div>
-
-<header class="top"><div class="wrap">
-  <a class="logo" href="#topo"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.6 6.4L21 9l-5 4.4L17.6 20 12 16.6 6.4 20 8 13.4 3 9l6.4-.6z" fill="#d4a23a"/></svg>Magia Natalina</a>
-  <nav class="nav" aria-label="Principal"><a href="#catalogo">Catálogo</a><a href="#compra-segura">Compra segura</a><a href="#faq">Dúvidas</a><a href="#contato">Contato</a></nav>
-  <button class="cart-btn" id="openCart" aria-label="Abrir carrinho"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 7H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>Carrinho <span class="n" id="cartN">0</span></button>
-</div></header>
-
-<main id="topo">
-<div class="hero"><div class="wrap">
-  <div>
-    <span class="eyebrow">Decoração de Natal</span>
-    <h1>Seu Natal começa com magia</h1>
-    <p class="lead">Enfeites, guirlandas, luzes e velas para deixar sua casa no clima mais especial do ano.</p>
-    <div class="cta"><a class="btn gold" href="#catalogo">Explorar enfeites</a><a class="btn ghost" href="#compra-segura">Como comprar</a></div>
-  </div>
-  <svg id="heroArt" viewBox="0 0 400 360" role="img" aria-label="Guirlanda dourada com bolas de Natal vermelhas e douradas"></svg>
-</div></div>
-
-<div class="perks"><div class="wrap"><ul>
-  <li><svg viewBox="0 0 24 24"><path d="M2 6h11v9H2zM13 9h4l3 3v3h-7z"/><circle cx="6" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg><div><strong>Entrega para todo o Brasil</strong><span>Prazo combinado no atendimento</span></div></li>
-  <li><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg><div><strong>Parcelamento sem juros</strong><span>Em todos os cartões</span></div></li>
-  <li><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9z"/><path d="M8.5 12h7M12 8.5v7"/></svg><div><strong>Pix ou boleto</strong><span id="pixPerk">Desconto no Pix</span></div></li>
-  <li><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg><div><strong>Dúvida? Fale no WhatsApp</strong><span>Atendimento humano</span></div></li>
-</ul></div></div>
-
-<section id="categorias"><div class="wrap">
-  <div class="head"><div><h2>Nossas categorias</h2><p>Encontre a decoração perfeita para cada espaço.</p></div></div>
-  <div class="cats" id="cats"></div>
-</div></section>
-
-<section id="catalogo" style="padding-top:0"><div class="wrap">
-  <div class="head"><div><h2>Nossos produtos</h2><p>Peças selecionadas para encantar.</p></div></div>
-  <div class="tools" id="tools"></div>
-  <div class="grid" id="grid"></div>
-</div></section>
-
-<section class="safe" id="compra-segura"><div class="wrap">
-  <div class="head"><div><span class="eyebrow">Compra tranquila</span><h2>Do pedido à sua porta</h2></div></div>
-  <div class="cols">
-    <div><h3>Atendimento humano</h3><p>Você monta o carrinho aqui e finaliza a compra conversando com a gente pelo WhatsApp. Tiramos dúvidas, confirmamos o frete e o prazo.</p></div>
-    <div><h3>Pague como preferir</h3><p>Pix, boleto ou cartão, com parcelamento sem juros em todos os cartões.</p></div>
-    <div><h3>Troca em até 7 dias</h3><p>Após o recebimento, com o produto sem uso e na embalagem original.</p></div>
-  </div>
-  <div class="depo" id="depo"></div>
-</div></section>
-
-<section id="faq"><div class="wrap faq">
-  <div class="head"><h2>Perguntas frequentes</h2></div>
-  <details><summary>Vocês entregam em todo o Brasil?</summary><p>Sim. Enviamos para todo o Brasil. O valor do frete e o prazo são confirmados com você no WhatsApp antes de fechar o pedido.</p></details>
-  <details><summary>Como finalizo minha compra?</summary><p>Adicione os produtos ao carrinho e toque em “Finalizar pelo WhatsApp”. O pedido já vai pronto na conversa e nossa equipe continua o atendimento com você.</p></details>
-  <details><summary>Quais são as formas de pagamento?</summary><p>Pix, boleto e cartão de crédito, com parcelamento sem juros em todos os cartões.</p></details>
-  <details><summary>Posso trocar um produto?</summary><p>Pode. As trocas são aceitas em até 7 dias após o recebimento, com o produto sem uso e na embalagem original.</p></details>
-  <details><summary>Quanto tempo leva para chegar?</summary><p>Depende da sua região. Informamos o prazo no atendimento, e por isso vale pedir com antecedência para receber antes do Natal.</p></details>
-</div></section>
-</main>
-
-<footer id="contato"><div class="wrap">
-  <div><h3>Magia Natalina</h3><p>Decoração de Natal com encanto e qualidade. Transforme seu lar em um cenário mágico.</p></div>
-  <div><h3>Atendimento</h3><p>Compras finalizadas com atendimento humano via WhatsApp.</p><p style="margin-top:.5rem">Trocas aceitas em até 7 dias após o recebimento, produto sem uso e na embalagem original.</p></div>
-  <div><h3>Contato</h3><p>WhatsApp: <span class="numero" id="footWa"></span></p><p id="footMail"></p><p id="footCnpj"></p></div>
-  <div class="copy">© 2026 Magia Natalina. Todos os direitos reservados.</div>
-</div></footer>
-
-<a class="fab" id="fab" href="#" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.2 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-1.9.9-2.2.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .6l-.4.6c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.1.1.7-.2 1.4z"/></svg><span>WhatsApp</span></a>
-
-<div class="veil" id="veil"></div>
-<aside class="drawer" id="drawer" aria-label="Carrinho" aria-hidden="true">
-  <header><h2>Seu carrinho</h2><button class="x" id="closeCart" aria-label="Fechar carrinho">×</button></header>
-  <div class="list" id="cartList"></div>
-  <div class="ship" id="shipBox"></div>
-  <div class="sum" id="sum"></div>
-</aside>
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Detalhes do produto"><div class="sheet" id="sheet"></div></div>
-<div class="toast" id="toast" role="status"></div>
-
-<script>
-/* ===== AJUSTE AQUI ===== */
 var CONFIG = {
-  whatsapp: "5513981523560",            // troque pelo número real (DDI+DDD+número, só dígitos)
-  email: "",                            // opcional
-  cnpj: "",                             // opcional
-  pixDesconto: 5,                       // % de desconto no Pix (0 para desligar)
-  parcelasMax: 12,                      // máximo de parcelas sem juros
-  parcelaMinima: 5,                     // valor mínimo de cada parcela (R$)
-  freteGratisAcima: 199,                // valor para frete grátis (0 para desligar)
-  prazoPedidos: "2026-12-15T23:59:59-03:00", // data limite exibida na faixa verde
-  depoimentos: []                       // ex.: [{texto:"...", nome:"Maria, SP"}] — use só avaliações reais
+  whatsapp: "5513981523560",
+  email: "",
+  cnpj: "",
+  pixDesconto: 0,
+  parcelasMax: 12,
+  parcelaMinima: 5,
+  freteGratisAcima: 0,
+  prazoPedidos: "2026-12-15T23:59:59-03:00",
+  depoimentos: [],
+  checkoutMode: "atenaspay",
+  paymentApi: "/api/create-pix"
 };
-var CATS = [
-  {id:"arvore", nome:"Árvore e Enfeites"},
-  {id:"portas", nome:"Portas e Guirlandas"},
-  {id:"luzes", nome:"Luzes e Projetores"},
-  {id:"casa", nome:"Casa, Mesa e Cozinha"},
-  {id:"presentes", nome:"Presentes e Diversão"},
-  {id:"religiosos", nome:"Presépios e Religiosos"}
-];
-/* Catálogo com fotos (preços de nov/2025: confira antes de publicar). Para cadastrar mais, copie um bloco e mude os campos. imgs = fotos em imagens/ */
-var CATALOGO = [
- {
-  "id": "tapete-de-entrada-tradicional-com-design-de-floco-de-neve-e-",
-  "nome": "Tapete de Entrada Tradicional com Design de Floco de Neve e Estrela Dourada",
-  "nomeCompleto": "Tapete de Entrada Tradicional com Design de Floco de Neve e Estrela Dourada",
-  "cat": "portas",
-  "preco": 177.8,
-  "imgs": [
-   "imagens/p01-1.webp",
-   "imagens/p01-2.webp"
-  ],
-  "desc": "Tapete de entrada natalino com design de floco de neve e estrela dourada. Disponível em vários tamanhos (30x50cm, 40x60cm, 50x80cm, 60x90cm). Ideal para decorar a entrada da casa no Natal.",
-  "variacoes": "30x50cm, 40x60cm, 50x80cm, 60x90cm"
- },
- {
-  "id": "festao-de-natal-verde-com-lacos",
-  "nome": "Festão de Natal Verde com Laços",
-  "nomeCompleto": "Festão de Natal Verde com Laços – Guirlanda Decorativa de 2m ou 10m",
-  "cat": "portas",
-  "preco": 77.68,
-  "imgs": [
-   "imagens/p02-1.webp",
-   "imagens/p02-2.webp",
-   "imagens/p02-3.webp"
-  ],
-  "desc": "Festão de Natal verde decorativo com laços. Disponível em versões de 2m, 6m ou 10m. Ideal para enfeitar árvores, portas, janelas e escadas.",
-  "variacoes": "1 unidade (2m), 3 unidades (6m), 5 unidades (10m) | Cores: Verde, Verde e Branco, Laço Verde Branco Dourado, Laço verde branco e vermelho, Branco"
- },
- {
-  "id": "capa-natalina-para-micro-ondas",
-  "nome": "Capa Natalina para Micro-ondas",
-  "nomeCompleto": "Capa Natalina para Micro-ondas – Protetor de Poeira com Estampa de Papai Noel, Rena e Boneco de Neve",
-  "cat": "casa",
-  "preco": 74.98,
-  "imgs": [
-   "imagens/p03-1.webp",
-   "imagens/p03-2.webp",
-   "imagens/p03-3.webp"
-  ],
-  "desc": "Capa protetora de poeira para micro-ondas com estampa natalina de Papai Noel, rena e boneco de neve. Cor borgonha. Protege e decora a cozinha no clima de Natal.",
-  "variacoes": "Borgonha"
- },
- {
-  "id": "cordao-de-luzes-led-solar-em-formato-de-cogumelos",
-  "nome": "Cordão de Luzes LED Solar em Formato de Cogumelos",
-  "nomeCompleto": "Cordão de Luzes LED Solar em Formato de Cogumelos – 8 Modos para Jardim",
-  "cat": "luzes",
-  "preco": 161.38,
-  "imgs": [
-   "imagens/p04-1.webp",
-   "imagens/p04-2.webp",
-   "imagens/p04-3.webp"
-  ],
-  "desc": "Cordão de luzes LED solares em formato de cogumelos vermelhos. 8 modos de iluminação. Ideal para decorar jardim, caminho e área externa no Natal. Energia solar.",
-  "variacoes": "8LED"
- },
- {
-  "id": "projetor-led-natalino-com-papai-noel-e-arvore-de-natal",
-  "nome": "Projetor LED Natalino com Papai Noel e Árvore de Natal",
-  "nomeCompleto": "Projetor LED Natalino com Papai Noel e Árvore de Natal – Luz Decorativa Ajustável",
-  "cat": "luzes",
-  "preco": 108.75,
-  "imgs": [
-   "imagens/p05-1.webp",
-   "imagens/p05-2.webp"
-  ],
-  "desc": "Projetor LED natalino com padrões de Papai Noel e árvore de Natal. Luz decorativa ajustável com vários padrões (até 24). Conexão USB Tipo C. Perfeito para projetar na parede ou teto.",
-  "variacoes": "24 padrões, Papai Noel com 6 padrões, 10 padrões, Árvore de 3 padrões, USB tipo C"
- },
- {
-  "id": "cordao-de-luzes-led-cogumelos",
-  "nome": "Cordão de Luzes LED Cogumelos",
-  "nomeCompleto": "Cordão de Luzes LED Cogumelos – Guirlanda Decorativa a Pilhas",
-  "cat": "luzes",
-  "preco": 96.92,
-  "imgs": [
-   "imagens/p06-1.webp",
-   "imagens/p06-2.webp"
-  ],
-  "desc": "Cordão de luzes LED em formato de cogumelos, alimentado por pilhas. Luz branca quente. Disponível em 2m (20 LED) ou 3m (30 LED). Ideal para decoração interna.",
-  "variacoes": "branco quente | 3M30LED, 2M20LED"
- },
- {
-  "id": "cordao-de-luzes-led-solar-em-fio-de-cobre",
-  "nome": "Cordão de Luzes LED Solar em Fio de Cobre",
-  "nomeCompleto": "Cordão de Luzes LED Solar em Fio de Cobre – 2 a 32 Metros com 8 Modos de Iluminação",
-  "cat": "luzes",
-  "preco": 71.5,
-  "imgs": [
-   "imagens/p07-1.webp",
-   "imagens/p07-2.webp"
-  ],
-  "desc": "Cordão de luzes LED solar em fio de cobre flexível. Disponível em comprimentos de 2m a 32m. 8 modos de iluminação, incluindo RGB. Ideal para árvores, jardins e fachadas.",
-  "variacoes": "RGB 32M, RGB 22M"
- },
- {
-  "id": "luminaria-de-jardim-em-forma-de-treno-de-papai-noel-luz-sola",
-  "nome": "Luminária de Jardim em Forma de Trenó de Papai Noel, Luz Solar de Natal para Jardim",
-  "nomeCompleto": "Luminária de Jardim em Forma de Trenó de Papai Noel, Luz Solar de Natal para Jardim",
-  "cat": "luzes",
-  "preco": 298.85,
-  "imgs": [
-   "imagens/p08-1.webp",
-   "imagens/p08-2.webp"
-  ],
-  "desc": "Luminária de jardim em formato de trenó do Papai Noel com luz solar. Decoração externa natalina autônoma, carrega durante o dia e ilumina à noite.",
-  "variacoes": "1pc"
- },
- {
-  "id": "cascata-de-luzes-led-natalinas-gotas-de-gelo",
-  "nome": "Cascata de Luzes LED Natalinas Gotas de Gelo",
-  "nomeCompleto": "Cascata de Luzes LED Natalinas Gotas de Gelo – USB, Azul e Branco, 6 ou 10 Metros",
-  "cat": "luzes",
-  "preco": 119.35,
-  "imgs": [
-   "imagens/p09-1.webp",
-   "imagens/p09-2.webp"
-  ],
-  "desc": "Cascata de luzes LED em formato de gotas de gelo (icicle). Alimentação USB. Cores disponíveis: azul e branco, branco, multicolorido, rosa, azul, cor quente. Tamanhos 6m (100 LED) ou 10m (190 LED).",
-  "variacoes": "Azul e branco, Branco, Multicolorido, Rosa, Azul, Cor quente | 6M 100LED, 10M 190LED"
- },
- {
-  "id": "cordao-de-luzes-led-com-folhas-verdes",
-  "nome": "Cordão de Luzes LED com Folhas Verdes",
-  "nomeCompleto": "Cordão de Luzes LED com Folhas Verdes – Guirlanda Artificial Decorativa a Pilhas",
-  "cat": "luzes",
-  "preco": 127.67,
-  "imgs": [
-   "imagens/p10-1.webp",
-   "imagens/p10-2.webp"
-  ],
-  "desc": "Cordão de luzes LED com folhas verdes artificiais (hera/ivy). Alimentado por pilhas. Disponível em vários tipos de folhagem e comprimentos (2m, 5m, 10m).",
-  "variacoes": "Folhas de melancia, Duas cores Ivy Vinhas, Endro Verde, Vinhas de Hera | 10m 100LEDS, 2M 20LEDS, 5M 50LEDs"
- },
- {
-  "id": "mini-enfeite-natalino-papai-noel-vermelho",
-  "nome": "Mini Enfeite Natalino Papai Noel Vermelho",
-  "nomeCompleto": "Mini Enfeite Natalino Papai Noel Vermelho – Boneco Decorativo para Mesa, Prateleiras e Decoração de Natal",
-  "cat": "casa",
-  "preco": 30.08,
-  "imgs": [
-   "imagens/p11-1.webp",
-   "imagens/p11-2.webp",
-   "imagens/p11-3.webp"
-  ],
-  "desc": "Mini enfeite de Papai Noel vermelho articulado. Ideal para mesa, prateleiras, árvore ou decoração de ambiente. Disponível também em branco.",
-  "variacoes": "Vermelho, BRANCO"
- },
- {
-  "id": "arvore-de-natal-de-feltro-infantil-diy-com-enfeites-decorati",
-  "nome": "Árvore de Natal de Feltro Infantil DIY com Enfeites Decorativos",
-  "nomeCompleto": "Árvore de Natal de Feltro Infantil DIY com Enfeites Decorativos – Kit Interativo para Montar e Pendurar na Parede",
-  "cat": "presentes",
-  "preco": 132.58,
-  "imgs": [
-   "imagens/p12-1.webp",
-   "imagens/p12-2.webp"
-  ],
-  "desc": "Kit de árvore de Natal de feltro interativa para crianças. Inclui enfeites decorativos para montar e pendurar na parede. Tamanho 100cm x 70cm. Várias opções de kits com ou sem luzes.",
-  "variacoes": "8 cores | PC-32pcs, PB-32pcs, E-26pcs, PA-32pcs | com ou sem 5M de luz | 100CMx70CM"
- },
- {
-  "id": "calendario-do-advento-com-cena-de-natal-24-figuras-de-acrili",
-  "nome": "Calendário do Advento com Cena de Natal, 24 Figuras de Acrílico, Contagem Regressiva",
-  "nomeCompleto": "Calendário do Advento com Cena de Natal, 24 Figuras de Acrílico, Contagem Regressiva",
-  "cat": "presentes",
-  "preco": 151.03,
-  "imgs": [
-   "imagens/p13-1.webp",
-   "imagens/p13-2.webp"
-  ],
-  "desc": "Calendário do Advento com cena de Natal e 24 figuras de acrílico. Contagem regressiva até o Natal. Decorativo e interativo para toda a família.",
-  "variacoes": ""
- },
- {
-  "id": "papai-noel-escalando-com-luzes-led",
-  "nome": "Papai Noel Escalando com Luzes LED",
-  "nomeCompleto": "Papai Noel Escalando com Luzes LED – Enfeite Natalino Iluminado USB de 1,5 ou 3 Metros com 8 Modos de Iluminação",
-  "cat": "luzes",
-  "preco": 220.55,
-  "imgs": [
-   "imagens/p14-1.webp",
-   "imagens/p14-2.webp"
-  ],
-  "desc": "Enfeite de Papai Noel escalando com luzes LED. Alimentação USB. Disponível em 1,5m ou 3m. 8 modos de iluminação. Ideal para escadas, paredes ou fachadas.",
-  "variacoes": "1,5m ou 3m"
- },
- {
-  "id": "enfeite-natalino-de-madeira-para-canto-de-porta",
-  "nome": "Enfeite Natalino de Madeira para Canto de Porta",
-  "nomeCompleto": "Enfeite Natalino de Madeira para Canto de Porta – Papai Noel, Boneco de Neve e Rena Decorativos",
-  "cat": "portas",
-  "preco": 78.04,
-  "imgs": [
-   "imagens/p15-1.webp",
-   "imagens/p15-2.webp"
-  ],
-  "desc": "Enfeite de madeira para canto de porta com temas de Papai Noel, boneco de neve e rena. Decoração clássica e charmosa para entrada.",
-  "variacoes": ""
- },
- {
-  "id": "enfeites-natalinos-pendentes",
-  "nome": "Enfeites Natalinos Pendentes",
-  "nomeCompleto": "Enfeites Natalinos Pendentes – Kit com 1 ou 4 Peças de Papai Noel, Boneco de Neve e Árvore de Natal",
-  "cat": "arvore",
-  "preco": 75.95,
-  "imgs": [
-   "imagens/p16-1.webp",
-   "imagens/p16-2.webp"
-  ],
-  "desc": "Kit de enfeites natalinos pendentes com Papai Noel, boneco de neve e árvore de Natal. Disponível em kits de 1 ou 4 peças.",
-  "variacoes": "1 ou 4 peças"
- },
- {
-  "id": "kit-4-capas-de-almofada-natalinas-45x45cm-em-poliester",
-  "nome": "Kit 4 Capas de Almofada Natalinas 45x45cm em Poliéster",
-  "nomeCompleto": "Kit 4 Capas de Almofada Natalinas 45x45cm em Poliéster – Estampas de Papai Noel e Boneco de Neve para Sofá",
-  "cat": "casa",
-  "preco": 134.6,
-  "imgs": [
-   "imagens/p17-1.webp",
-   "imagens/p17-2.webp"
-  ],
-  "desc": "Kit com 4 capas de almofada natalinas 45x45cm em poliéster. Estampas de Papai Noel e boneco de neve. Perfeitas para sofá e decoração de sala.",
-  "variacoes": "45x45cm"
- },
- {
-  "id": "enfeite-natalino-iluminado-com-led-para-porta",
-  "nome": "Enfeite Natalino Iluminado com LED para Porta",
-  "nomeCompleto": "Enfeite Natalino Iluminado com LED para Porta – Papai Noel ou Boneco de Neve para Decoração de Natal",
-  "cat": "portas",
-  "preco": 180.98,
-  "imgs": [
-   "imagens/p18-1.webp",
-   "imagens/p18-2.webp"
-  ],
-  "desc": "Enfeite iluminado com LED para porta, com tema de Papai Noel ou boneco de neve. Decoração de destaque para entrada da casa.",
-  "variacoes": "Papai Noel ou Boneco de Neve"
- },
- {
-  "id": "kit-de-decoracao-natalina-para-banheiro",
-  "nome": "Kit de Decoração Natalina para Banheiro",
-  "nomeCompleto": "Kit de Decoração Natalina para Banheiro – Capa para Vaso Sanitário e Tapete com Estampa de Papai Noel",
-  "cat": "casa",
-  "preco": 161.65,
-  "imgs": [
-   "imagens/p19-1.webp",
-   "imagens/p19-2.webp"
-  ],
-  "desc": "Kit completo de decoração natalina para banheiro: capa para vaso sanitário + tapete com estampa de Papai Noel. Transforma o banheiro no clima de Natal.",
-  "variacoes": ""
- },
- {
-  "id": "caneca-de-cafe-de-papai-noel-500ml-caneca-de-ceramica-com-de",
-  "nome": "Caneca de Café de Papai Noel 500ML, Caneca de Cerâmica com Desenho Animado",
-  "nomeCompleto": "Caneca de Café de Papai Noel 500ML, Caneca de Cerâmica com Desenho Animado",
-  "cat": "presentes",
-  "preco": 109.78,
-  "imgs": [
-   "imagens/p20-1.webp",
-   "imagens/p20-2.webp"
-  ],
-  "desc": "Caneca de cerâmica de 500ml com desenho animado do Papai Noel. Ideal para café, chocolate quente ou presente natalino.",
-  "variacoes": "500ML"
- },
- {
-  "id": "kit-com-10-enfeites-natalinos-de-madeira",
-  "nome": "Kit com 10 Enfeites Natalinos de Madeira",
-  "nomeCompleto": "Kit com 10 Enfeites Natalinos de Madeira – Papai Noel com Paraquedas para Decoração de Natal",
-  "cat": "arvore",
-  "preco": 92.57,
-  "imgs": [
-   "imagens/p21-1.webp"
-  ],
-  "desc": "Kit com 10 enfeites de madeira de Papai Noel com paraquedas. Decoração divertida e original para árvore ou ambiente.",
-  "variacoes": "10 peças"
- },
- {
-  "id": "boneco-natalino-telescopico-de-pelucia",
-  "nome": "Boneco Natalino Telescópico de Pelúcia",
-  "nomeCompleto": "Boneco Natalino Telescópico de Pelúcia – Rena ou Boneco de Neve com Altura Ajustável para Decoração de Natal",
-  "cat": "presentes",
-  "preco": 177.35,
-  "imgs": [
-   "imagens/p22-1.webp",
-   "imagens/p22-2.webp"
-  ],
-  "desc": "Boneco natalino de pelúcia telescópico (altura ajustável). Disponível em rena ou boneco de neve. Ideal para decoração de chão ou mesa.",
-  "variacoes": "Rena ou Boneco de Neve"
- },
- {
-  "id": "kit-com-10-ou-20-flores-de-natal-artificiais-com-glitter-14-",
-  "nome": "Kit com 10 ou 20 Flores de Natal Artificiais com Glitter 14,5 cm",
-  "nomeCompleto": "Kit com 10 ou 20 Flores de Natal Artificiais com Glitter 14,5 cm – Enfeites Decorativos para Árvore de Natal",
-  "cat": "arvore",
-  "preco": 104.45,
-  "imgs": [
-   "imagens/p23-1.webp",
-   "imagens/p23-2.webp"
-  ],
-  "desc": "Kit de flores de Natal artificiais com glitter (14,5 cm). Disponível em kits de 10 ou 20 unidades. Perfeitas para decorar a árvore.",
-  "variacoes": "10 ou 20 unidades | 14,5 cm"
- },
- {
-  "id": "estrela-de-belem-natalina-iluminada-com-led",
-  "nome": "Estrela de Belém Natalina Iluminada com LED",
-  "nomeCompleto": "Estrela de Belém Natalina Iluminada com LED – Enfeite Religioso de Parede com Luz Quente para Decoração de Natal",
-  "cat": "religiosos",
-  "preco": 209.98,
-  "imgs": [
-   "imagens/p24-1.webp"
-  ],
-  "desc": "Estrela de Belém iluminada com LED de luz quente. Enfeite religioso de parede, ideal para criar um ambiente natalino e espiritual.",
-  "variacoes": ""
- },
- {
-  "id": "mini-papai-noel-para-monitor-tv",
-  "nome": "Mini Papai Noel para Monitor/TV",
-  "nomeCompleto": "Mini Papai Noel para Monitor/TV – Conjunto de 5 Peças Sentados",
-  "cat": "casa",
-  "preco": 49.9,
-  "imgs": [
-   "imagens/p25-1.webp",
-   "imagens/p25-2.webp",
-   "imagens/p25-3.webp"
-  ],
-  "desc": "Conjunto de 5 mini Papai Noéis sentados, ideais para decorar a borda do monitor, TV ou prateleira. Feitos em material resistente, estilo fofo e natalino.",
-  "variacoes": ""
- },
- {
-  "id": "calendario-do-advento-em-forma-de-chamine-lareira-com-papai-",
-  "nome": "Calendário do Advento em Forma de Chaminé/Lareira com Papai Noel",
-  "nomeCompleto": "Calendário do Advento em Forma de Chaminé/Lareira com Papai Noel",
-  "cat": "presentes",
-  "preco": 189.9,
-  "imgs": [
-   "imagens/p26-1.webp"
-  ],
-  "desc": "Calendário do Advento interativo em formato de chaminé vermelha com Papai Noel no topo. Contém 24 portinhas numeradas e base com meias e lareira. Perfeito para a contagem regressiva do Natal.",
-  "variacoes": ""
- },
- {
-  "id": "estatua-de-anjo-querubim-branco-pensativo",
-  "nome": "Estátua de Anjo Querubim Branco Pensativo",
-  "nomeCompleto": "Estátua de Anjo Querubim Branco Pensativo",
-  "cat": "religiosos",
-  "preco": 79.9,
-  "imgs": [
-   "imagens/p27-1.webp"
-  ],
-  "desc": "Linda estátua de anjo querubim branco sentado em pose pensativa, com asas detalhadas. Ideal para decoração de mesa, prateleira ou presente natalino. Material resina/cerâmica.",
-  "variacoes": ""
- },
- {
-  "id": "boneco-de-neve-mini-com-cartola-e-cachecol",
-  "nome": "Boneco de Neve Mini com Cartola e Cachecol",
-  "nomeCompleto": "Boneco de Neve Mini com Cartola e Cachecol – Kit de 2 Peças",
-  "cat": "presentes",
-  "preco": 45.9,
-  "imgs": [
-   "imagens/p28-1.webp",
-   "imagens/p28-2.webp"
-  ],
-  "desc": "Par de mini bonecos de neve 3D com cartola preta, cachecol vermelho e botões. Perfeitos para mesa, prateleira ou como enfeite de árvore. Material plástico resistente.",
-  "variacoes": ""
- },
- {
-  "id": "estatua-de-rena-branca-com-cachecol",
-  "nome": "Estátua de Rena Branca com Cachecol",
-  "nomeCompleto": "Estátua de Rena Branca com Cachecol",
-  "cat": "casa",
-  "preco": 89.9,
-  "imgs": [
-   "imagens/p29-1.webp"
-  ],
-  "desc": "Elegante estátua de rena branca em estilo minimalista com cachecol. Textura detalhada, ideal para decoração sofisticada de Natal em mesa ou aparador.",
-  "variacoes": ""
- },
- {
-  "id": "anjo-branco-orando",
-  "nome": "Anjo Branco Orando",
-  "nomeCompleto": "Anjo Branco Orando – Estátua Decorativa",
-  "cat": "religiosos",
-  "preco": 69.9,
-  "imgs": [
-   "imagens/p30-1.webp",
-   "imagens/p30-2.webp"
-  ],
-  "desc": "Estátua de anjo branco em pose de oração, com vestido plissado e asas delicadas. Perfeita para criar um ambiente natalino sereno e espiritual.",
-  "variacoes": ""
- },
- {
-  "id": "treno-vermelho-decorativo-de-natal",
-  "nome": "Trenó Vermelho Decorativo de Natal",
-  "nomeCompleto": "Trenó Vermelho Decorativo de Natal",
-  "cat": "casa",
-  "preco": 59.9,
-  "imgs": [
-   "imagens/p31-1.webp",
-   "imagens/p31-2.webp"
-  ],
-  "desc": "Trenó vermelho decorativo com detalhes em verde, flocos de neve e árvore. Ideal para colocar presentes ou como enfeite de mesa/centro de mesa natalino.",
-  "variacoes": ""
- },
- {
-  "id": "letras-3d-feliz-natal-vermelhas-com-floco-de-neve",
-  "nome": "Letras 3D Feliz Natal Vermelhas com Floco de Neve",
-  "nomeCompleto": "Letras 3D Feliz Natal Vermelhas com Floco de Neve",
-  "cat": "casa",
-  "preco": 74.9,
-  "imgs": [
-   "imagens/p32-1.webp",
-   "imagens/p32-2.webp"
-  ],
-  "desc": "Conjunto de letras 3D vermelhas formando ’Feliz Natal’ com floco de neve decorativo. Ideal para mesa, aparador ou vitrine. Material resistente.",
-  "variacoes": ""
- },
- {
-  "id": "arvores-de-natal-de-papel-acordeao",
-  "nome": "Árvores de Natal de Papel Acordeão",
-  "nomeCompleto": "Árvores de Natal de Papel Acordeão – Kit 3 Tamanhos (17cm, 11cm, 8,5cm)",
-  "cat": "arvore",
-  "preco": 54.9,
-  "imgs": [
-   "imagens/p33-1.webp",
-   "imagens/p33-2.webp"
-  ],
-  "desc": "Kit com 3 árvores de Natal em papel acordeão verde com bolinhas douradas e estrela. Tamanhos: 17cm, 11cm e 8,5cm. Fáceis de montar e guardar.",
-  "variacoes": ""
- },
- {
-  "id": "anjo-led-dourado-com-cauda-de-estrelas",
-  "nome": "Anjo LED Dourado com Cauda de Estrelas",
-  "nomeCompleto": "Anjo LED Dourado com Cauda de Estrelas – 1 ou 2 Peças",
-  "cat": "luzes",
-  "preco": 99.9,
-  "imgs": [
-   "imagens/p34-1.webp",
-   "imagens/p34-2.webp"
-  ],
-  "desc": "Anjo LED dourado iluminado com cauda de estrelas e bolinhas. Disponível em 1 ou 2 peças. Ideal para pendurar na árvore ou parede. Funciona com bateria ou USB.",
-  "variacoes": ""
- },
- {
-  "id": "mini-arvore-de-natal-com-laco-vermelho-e-bolas-douradas",
-  "nome": "Mini Árvore de Natal com Laço Vermelho e Bolas Douradas",
-  "nomeCompleto": "Mini Árvore de Natal com Laço Vermelho e Bolas Douradas",
-  "cat": "arvore",
-  "preco": 67.9,
-  "imgs": [
-   "imagens/p35-1.webp"
-  ],
-  "desc": "Mini árvore de Natal artificial com laço vermelho grande e bolas douradas. Base de plástico. Perfeita para mesa, escritório ou apartamento pequeno.",
-  "variacoes": ""
- },
- {
-  "id": "presepio-kit-natividade-completo-com-figuras",
-  "nome": "Presépio / Kit Natividade Completo com Figuras",
-  "nomeCompleto": "Presépio / Kit Natividade Completo com Figuras",
-  "cat": "religiosos",
-  "preco": 129.9,
-  "imgs": [
-   "imagens/p36-1.webp",
-   "imagens/p36-2.webp"
-  ],
-  "desc": "Kit completo de Presépio (Natividade) com figuras de Maria, José, Menino Jesus, Reis Magos, pastor, animais e estrela. Estilo moderno e fofo. Ideal para decoração religiosa de Natal.",
-  "variacoes": ""
- },
- {
-  "id": "kit-de-blocos-de-montar-treno-merry-christmas",
-  "nome": "Kit de Blocos de Montar Trenó Merry Christmas",
-  "nomeCompleto": "Kit de Blocos de Montar Trenó Merry Christmas – 179 Peças",
-  "cat": "presentes",
-  "preco": 79.9,
-  "imgs": [
-   "imagens/p37-1.webp"
-  ],
-  "desc": "Kit de blocos de montar (tipo Lego) do trenó de Natal ’Merry Christmas’ com 179 peças. Tamanho aproximado 11,3 x 7,8 x 5cm. Diversão para crianças e adultos.",
-  "variacoes": ""
- },
- {
-  "id": "caixa-de-presente-decorativa-com-pernas-e-rosto",
-  "nome": "Caixa de Presente Decorativa com Pernas e Rosto",
-  "nomeCompleto": "Caixa de Presente Decorativa com Pernas e Rosto",
-  "cat": "casa",
-  "preco": 39.9,
-  "imgs": [
-   "imagens/p38-1.webp"
-  ],
-  "desc": "Caixa de presente vermelha com laço verde, rostinho sorridente e pernas articuladas. Enfeite divertido para mesa, prateleira ou presente criativo.",
-  "variacoes": ""
- }
-];
-var PRODUCTS = CATALOGO;
-/* ======================== */
 
 var $ = function(s){return document.querySelector(s)};
-var fmt = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+var fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 var cart = [], filtro = "todos", ordem = "destaque";
-try{ var saved = JSON.parse(localStorage.getItem("mn-cart")||"[]"); if(Array.isArray(saved)) cart = saved.filter(function(i){return PRODUCTS.some(function(p){return p.id===i.id})}); }catch(e){}
-function save(){ try{ localStorage.setItem("mn-cart", JSON.stringify(cart)); }catch(e){} }
-function prod(id){ return PRODUCTS.filter(function(p){return p.id===id})[0]; }
-function catNome(id){ return CATS.filter(function(c){return c.id===id})[0].nome; }
-function fmtFone(n){ var d=n.replace(/\D/g,""); if(d.length>=12){ return "("+d.slice(2,4)+") "+d.slice(4,-4)+"-"+d.slice(-4);} return d; }
 
-/* ---------- ilustrações ---------- */
-function art(k){
-  var s = '<svg viewBox="0 0 200 200" role="img" aria-hidden="true">';
-  if(k==="bolas"){
-    s+='<g stroke="#b8892b" stroke-width="2"><line x1="70" y1="0" x2="70" y2="62"/><line x1="140" y1="0" x2="140" y2="48"/><line x1="104" y1="0" x2="104" y2="104"/></g>';
-    s+='<circle cx="70" cy="102" r="40" fill="#b3162d"/><ellipse cx="55" cy="86" rx="9" ry="14" fill="#fff" opacity=".28" transform="rotate(25 55 86)"/><rect x="62" y="58" width="16" height="9" rx="2" fill="#d4a23a"/>';
-    s+='<circle cx="140" cy="82" r="34" fill="#d4a23a"/><ellipse cx="128" cy="68" rx="7" ry="12" fill="#fff" opacity=".35" transform="rotate(25 128 68)"/><rect x="133" y="44" width="14" height="8" rx="2" fill="#8a6212"/>';
-    s+='<circle cx="104" cy="148" r="30" fill="#8b1a2b"/><ellipse cx="94" cy="136" rx="6" ry="10" fill="#fff" opacity=".28" transform="rotate(25 94 136)"/><rect x="97" y="112" width="14" height="8" rx="2" fill="#d4a23a"/>';
-  } else if(k==="guirlanda"){
-    s+='<circle cx="100" cy="100" r="56" fill="none" stroke="#1f5a3e" stroke-width="26"/><circle cx="100" cy="100" r="56" fill="none" stroke="#2f7a55" stroke-width="10" stroke-dasharray="3 7"/>';
-    [[60,70],[130,58],[152,108],[104,152],[52,118],[96,44]].forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="#c2182f"/><circle cx="'+(p[0]-2)+'" cy="'+(p[1]-2)+'" r="2" fill="#fff" opacity=".6"/>'; });
-    s+='<path d="M100 160 L74 184 L86 156 Z M100 160 L126 184 L114 156 Z" fill="#b3162d"/><circle cx="100" cy="158" r="9" fill="#8b1a2b"/>';
-  } else if(k==="luzes"){
-    s+='<path d="M0 60 Q50 130 100 80 T200 90" fill="none" stroke="#5c4a3d" stroke-width="3"/>';
-    [[22,92],[56,112],[92,90],[128,88],[164,98],[190,92]].forEach(function(p,i){ s+='<circle cx="'+p[0]+'" cy="'+(p[1]+22)+'" r="22" fill="#ffd37a" opacity=".28"/><circle cx="'+p[0]+'" cy="'+(p[1]+14)+'" r="9" fill="#ffd37a"/><rect x="'+(p[0]-3)+'" y="'+(p[1]-1)+'" width="6" height="8" fill="#5c4a3d"/>'; });
-    s+='<path d="M0 150 Q60 190 110 150 T200 160" fill="none" stroke="#5c4a3d" stroke-width="3"/>';
-    [[30,176],[75,176],[135,172],[175,166]].forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+(p[1]-4)+'" r="18" fill="#ffd37a" opacity=".25"/><circle cx="'+p[0]+'" cy="'+(p[1]-6)+'" r="7" fill="#ffd37a"/>'; });
-  } else if(k==="vela"){
-    s+='<path d="M100 28c10 14 14 22 14 30a14 14 0 01-28 0c0-8 4-16 14-30z" fill="#ffb02e"/><path d="M100 44c5 7 7 11 7 15a7 7 0 01-14 0c0-4 2-8 7-15z" fill="#fff1b8"/>';
-    s+='<line x1="100" y1="72" x2="100" y2="88" stroke="#3a2a22" stroke-width="3"/>';
-    s+='<rect x="62" y="86" width="76" height="92" rx="12" fill="#e9d6c0" opacity=".85" stroke="#b8892b" stroke-width="2"/><rect x="66" y="92" width="68" height="24" rx="6" fill="#f6ead9"/>';
-    s+='<rect x="62" y="124" width="76" height="30" fill="#b3162d"/><path d="M80 139h40" stroke="#f3d27a" stroke-width="3" stroke-linecap="round"/>';
-    s+='<path d="M150 60l4 8 8 4-8 4-4 8-4-8-8-4 8-4z" fill="#d4a23a"/>';
-  } else if(k==="presepio"){
-    s+='<path d="M24 96 L100 40 L176 96 Z" fill="#7a4a2c"/><rect x="38" y="96" width="124" height="70" fill="#b98a5c"/><rect x="38" y="160" width="124" height="12" fill="#6b4a30"/>';
-    s+='<path d="M100 10l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="#d4a23a"/>';
-    s+='<path d="M70 166v-44a14 14 0 0128 0v44z" fill="#3a2418"/>';
-    s+='<circle cx="118" cy="128" r="7" fill="#f0c9a0"/><path d="M108 164l4-26h12l4 26z" fill="#2f5d8a"/>';
-    s+='<circle cx="142" cy="140" r="6" fill="#f0c9a0"/><path d="M134 164l3-18h10l3 18z" fill="#b3162d"/>';
-  } else {
-    var a=[0,60,120,180,240,300];
-    s+='<g stroke="#6fa8cf" stroke-width="6" stroke-linecap="round" fill="none" transform="translate(100 100)">';
-    a.forEach(function(d){ s+='<g transform="rotate('+d+')"><line x1="0" y1="0" x2="0" y2="-70"/><line x1="0" y1="-30" x2="-16" y2="-46"/><line x1="0" y1="-30" x2="16" y2="-46"/><line x1="0" y1="-50" x2="-12" y2="-62"/><line x1="0" y1="-50" x2="12" y2="-62"/></g>'; });
-    s+='</g><circle cx="100" cy="100" r="9" fill="#cfe6f5"/>';
-  }
-  return s+'</svg>';
-}
-function heroArt(){
-  var s='<path d="M-10 40 Q100 120 200 70 T410 60" fill="none" stroke="#e8c36f" stroke-width="3.5"/>';
-  var b=[[60,98,34,"#b3162d"],[140,114,26,"#e8c36f"],[222,92,38,"#d6283f"],[302,86,26,"#e8c36f"],[352,78,30,"#b3162d"]];
-  b.forEach(function(x){ s+='<line x1="'+x[0]+'" y1="'+(x[1]-6)+'" x2="'+x[0]+'" y2="'+(x[1]+60)+'" stroke="#e8c36f" stroke-width="2"/>'; });
-  b.forEach(function(x){ var cy=x[1]+60+x[2]; s+='<circle cx="'+x[0]+'" cy="'+cy+'" r="'+x[2]+'" fill="'+x[3]+'"/><ellipse cx="'+(x[0]-x[2]*.35)+'" cy="'+(cy-x[2]*.35)+'" rx="'+(x[2]*.16)+'" ry="'+(x[2]*.3)+'" fill="#fff" opacity=".3" transform="rotate(25 '+(x[0]-x[2]*.35)+' '+(cy-x[2]*.35)+')"/><rect x="'+(x[0]-6)+'" y="'+(cy-x[2]-6)+'" width="12" height="8" rx="2" fill="#e8c36f"/>'; });
-  [[100,300,10],[260,320,8],[330,250,12],[40,260,7]].forEach(function(p){ s+='<path d="M'+p[0]+' '+(p[1]-p[2])+'l'+(p[2]*.3)+' '+(p[2]*.7)+' '+(p[2]*.7)+' '+(p[2]*.3)+' -'+(p[2]*.7)+' '+(p[2]*.3)+' -'+(p[2]*.3)+' '+(p[2]*.7)+' -'+(p[2]*.3)+' -'+(p[2]*.7)+' -'+(p[2]*.7)+' -'+(p[2]*.3)+' '+(p[2]*.7)+' -'+(p[2]*.3)+'z" fill="#e8c36f" opacity=".9"/>'; });
-  $("#heroArt").innerHTML=s;
-}
+try {
+  var saved = JSON.parse(localStorage.getItem("mn-cart") || "[]");
+  if (Array.isArray(saved)) cart = saved.filter(function(i){ return PRODUCTS.some(function(p){ return p.id === i.id; }); });
+} catch (e) {}
 
-/* ---------- fotos e preços ---------- */
-document.addEventListener("load",function(e){ var i=e.target; if(i&&i.tagName==="IMG"&&i.naturalWidth){ var r=i.naturalWidth/i.naturalHeight; if(r<.8||r>1.25){ i.style.objectFit="contain"; i.style.background="#fff"; } } },true);
-function esc(s){ return String(s).replace(/"/g,"&quot;"); }
-function thumb(p){ return (p.imgs&&p.imgs.length) ? '<img src="'+p.imgs[0]+'" alt="'+esc(p.nome)+'" loading="lazy" decoding="async">' : art(p.art); }
-function galeria(p){
-  var h='<div class="gal"><div class="art" id="mainArt">'+thumb(p)+'</div>';
-  if(p.imgs&&p.imgs.length>1){ h+='<div class="thumbs">'+p.imgs.map(function(s,i){ return '<button data-img="'+s+'" aria-current="'+(i===0)+'" aria-label="Foto '+(i+1)+'"><img src="'+s+'" alt=""></button>'; }).join("")+'</div>'; }
-  return h+'</div>';
-}
-function parcelas(p){ return Math.max(1,Math.min(CONFIG.parcelasMax,Math.floor(p.preco/CONFIG.parcelaMinima))); }
-function precoHTML(p){
-  var n=parcelas(p), h='<b>'+fmt.format(p.preco)+'</b>';
-  if(n>1) h+='<small>ou '+n+'x de '+fmt.format(p.preco/n)+' sem juros</small>';
-  if(CONFIG.pixDesconto>0) h+='<small class="pix">'+fmt.format(p.preco*(1-CONFIG.pixDesconto/100))+' no Pix</small>';
-  return h;
-}
-
-/* ---------- vitrine ---------- */
-function renderCats(){
-  $("#cats").innerHTML = CATS.map(function(c){
-    var n=PRODUCTS.filter(function(p){return p.cat===c.id}).length;
-    return '<button class="cat" data-cat="'+c.id+'"><b>'+c.nome+'</b><span>'+(n?n+(n>1?' produtos':' produto'):'Em breve')+'</span></button>';
-  }).join("");
-}
-function renderTools(){
-  var h='<button class="chip" data-filter="todos" aria-pressed="'+(filtro==="todos")+'">Todos</button>';
-  CATS.forEach(function(c){ h+='<button class="chip" data-filter="'+c.id+'" aria-pressed="'+(filtro===c.id)+'">'+c.nome+'</button>'; });
-  h+='<select id="sort" aria-label="Ordenar produtos"><option value="destaque"'+(ordem==="destaque"?" selected":"")+'>Destaques</option><option value="menor"'+(ordem==="menor"?" selected":"")+'>Menor preço</option><option value="maior"'+(ordem==="maior"?" selected":"")+'>Maior preço</option></select>';
-  $("#tools").innerHTML=h;
-}
-function renderGrid(){
-  var l=PRODUCTS.filter(function(p){return filtro==="todos"||p.cat===filtro});
-  if(ordem==="menor") l=l.slice().sort(function(a,b){return a.preco-b.preco});
-  if(ordem==="maior") l=l.slice().sort(function(a,b){return b.preco-a.preco});
-  if(!l.length){ $("#grid").innerHTML='<div class="empty">Novos produtos desta categoria chegam em breve. Quer algo específico? Chame a gente no WhatsApp.</div>'; return; }
-  $("#grid").innerHTML=l.map(function(p){
-    return '<article class="card"><button class="art" data-open="'+p.id+'" aria-label="Ver detalhes de '+p.nome+'">'+thumb(p)+'</button><div class="body"><span class="cat-name">'+catNome(p.cat)+'</span><h3 data-open="'+p.id+'">'+p.nome+'</h3><p class="desc">'+p.desc+'</p><div class="price">'+precoHTML(p)+'</div><button class="btn" data-add="'+p.id+'">Comprar</button></div></article>';
-  }).join("");
-}
-function renderDepo(){
-  var d=CONFIG.depoimentos||[];
-  $("#depo").innerHTML=d.map(function(x){ return '<figure><blockquote>“'+x.texto+'”</blockquote><figcaption>'+x.nome+'</figcaption></figure>'; }).join("");
-}
-
-/* ---------- carrinho ---------- */
-function subtotal(){ return cart.reduce(function(s,i){return s+prod(i.id).preco*i.qty},0); }
+function save(){ try { localStorage.setItem("mn-cart", JSON.stringify(cart)); } catch (e) {} }
+function prod(id){ return PRODUCTS.filter(function(p){ return p.id === id; })[0]; }
+function catNome(id){ return CATS.filter(function(c){ return c.id === id; })[0].nome; }
+function fmtFone(n){ var d=n.replace(/\D/g, ""); if(d.length>=12){ return "("+d.slice(2,4)+") "+d.slice(4,-4)+"-"+d.slice(-4); } return d; }
+function subtotal(){ return cart.reduce(function(s, i){ return s + prod(i.id).preco * i.qty; }, 0); }
 function pedidoTexto(){
-  var t="Olá! Quero finalizar meu pedido na Magia Natalina:\n";
-  cart.forEach(function(i){ var p=prod(i.id); t+="- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"")+" ("+fmt.format(p.preco*i.qty)+")\n"; });
-  t+="Total: "+fmt.format(subtotal());
+  var t = "Olá! Quero finalizar meu pedido na Magia Natalina:\n";
+  cart.forEach(function(i){ var p = prod(i.id); t += "- " + i.qty + "x " + p.nome + (p.variacoes ? " [opção a confirmar]" : "") + " (" + fmt.format(p.preco * i.qty) + ")\n"; });
+  t += "Total: " + fmt.format(subtotal());
   return t;
 }
-function waLink(texto){ return "https://wa.me/"+CONFIG.whatsapp.replace(/\D/g,"")+(texto?"?text="+encodeURIComponent(texto):""); }
+function waLink(texto){ return "https://wa.me/" + CONFIG.whatsapp.replace(/\D/g, "") + (texto ? "?text=" + encodeURIComponent(texto) : ""); }
+
+function buildCheckoutPayload() {
+  var total = subtotal();
+  if (!cart.length || total <= 0) return null;
+
+  var items = cart.map(function(i){ return { id: i.id, qty: i.qty }; });
+  var totalRounded = Number(total.toFixed(2));
+  return {
+    amount: totalRounded,
+    external_id: "mn-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10),
+    description: "Pedido Magia Natalina",
+    payer: {
+      name: "Cliente",
+      cpf: "00000000191",
+      email: "cliente@magia-natalina.com.br"
+    },
+    items: items
+  };
+}
+
+async function createAtenasPayCheckout() {
+  var payload = buildCheckoutPayload();
+  if (!payload) {
+    toast("Carrinho vazio");
+    return;
+  }
+
+  var btn = document.getElementById("checkoutBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Gerando QR Code...";
+  }
+
+  try {
+    var response = await fetch(CONFIG.paymentApi, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    var data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || data.error || "Erro ao gerar cobrança.");
+    }
+
+    var total = subtotal();
+    var modalHtml = '<div class="checkout-sheet">' +
+      '<div class="checkout-header"><h2>Pagamento por Pix</h2><button class="x" data-close-modal aria-label="Fechar">×</button></div>' +
+      '<div class="checkout-box">' +
+      '<div class="checkout-total">Total: <strong>' + fmt.format(total) + '</strong></div>' +
+      '<p class="checkout-copy">Escaneie o QR Code ou copie o código para pagar no seu aplicativo do banco.</p>' +
+      ((data.qr_code_base64 || data.qr_code) ? '<div class="qr-wrap"><img src="' + (data.qr_code_base64 || data.qr_code) + '" alt="QR Code do Pix" /></div>' : '') +
+      ((data.pix_copy_paste || data.copiacola) ? '<textarea readonly class="pix-box">' + (data.pix_copy_paste || data.copiacola) + '</textarea>' : '') +
+      '<div class="checkout-actions"><button class="btn" data-close-modal>Fechar</button></div>' +
+      '</div></div>';
+
+    var panel = document.getElementById("checkoutModal");
+    if (panel) {
+      panel.innerHTML = modalHtml;
+      panel.classList.add("on");
+      document.getElementById("veil").classList.add("on");
+    }
+
+    toast("Pix gerado com sucesso");
+  } catch (error) {
+    toast(error.message || "Falha ao gerar o Pix");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Pagar com AtenasPay";
+    }
+  }
+}
+
 function renderCart(){
-  var n=cart.reduce(function(s,i){return s+i.qty},0); $("#cartN").textContent=n;
-  var st=subtotal();
-  if(!cart.length){
-    $("#cartList").innerHTML='<p style="color:var(--muted)">Seu carrinho está vazio. Escolha um enfeite na vitrine e toque em Comprar.</p>';
-    $("#shipBox").innerHTML=""; $("#sum").innerHTML='<button class="btn" data-close-cart>Ver produtos</button>'; return;
+  var n = cart.reduce(function(s, i){ return s + i.qty; }, 0); 
+  var cartNode = document.getElementById("cartN");
+  if (cartNode) cartNode.textContent = n;
+
+  var st = subtotal();
+  if (!cart.length) {
+    document.getElementById("cartList").innerHTML = '<p style="color:var(--muted)">Seu carrinho está vazio. Escolha um enfeite na vitrine e toque em Comprar.</p>';
+    document.getElementById("shipBox").innerHTML = "";
+    document.getElementById("sum").innerHTML = '<button class="btn" data-close-cart>Ver produtos</button>';
+    return;
   }
-  $("#cartList").innerHTML=cart.map(function(i){
-    var p=prod(i.id);
-    return '<div class="line"><div class="art">'+thumb(p)+'</div><div><b>'+p.nome+'</b><div class="qty"><button data-dec="'+p.id+'" aria-label="Diminuir">−</button><span>'+i.qty+'</span><button data-inc="'+p.id+'" aria-label="Aumentar">+</button></div> <button class="rm" data-rm="'+p.id+'">remover</button></div><b style="font-variant-numeric:tabular-nums">'+fmt.format(p.preco*i.qty)+'</b></div>';
+
+  document.getElementById("cartList").innerHTML = cart.map(function(i){
+    var p = prod(i.id);
+    return '<div class="line"><div class="art">' + thumb(p) + '</div><div><b>' + p.nome + '</b><div class="qty"><button data-dec="'+p.id+'" aria-label="Diminuir">−</button><span>' + i.qty + '</span><button data-inc="'+p.id+'" aria-label="Aumentar">+</button></div></div><button class="rm" data-rm="'+p.id+'">Remover</button></div>';
   }).join("");
-  var f=CONFIG.freteGratisAcima;
-  if(f>0){ var falta=f-st; $("#shipBox").innerHTML= falta>0 ? 'Faltam <b>'+fmt.format(falta)+'</b> para ganhar frete grátis.<div class="bar"><i style="width:'+Math.min(100,st/f*100)+'%"></i></div>' : '<b style="color:var(--ok)">Você ganhou frete grátis!</b><div class="bar"><i style="width:100%"></i></div>'; } else $("#shipBox").innerHTML="";
-  var h='<div class="row"><span>Subtotal</span><span>'+fmt.format(st)+'</span></div>';
-  if(CONFIG.pixDesconto>0) h+='<div class="row" style="color:var(--ok)"><span>No Pix ('+CONFIG.pixDesconto+'% off)</span><span>'+fmt.format(st*(1-CONFIG.pixDesconto/100))+'</span></div>';
-  h+='<div class="row total"><span>Total</span><span>'+fmt.format(st)+'</span></div><small>Frete e prazo confirmados no atendimento.</small>';
-  h+='<a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a>';
-  h+='<button class="copybtn" data-copy>Copiar pedido e enviar manualmente para '+fmtFone(CONFIG.whatsapp)+'</button>';
-  $("#sum").innerHTML=h;
-}
-function addCart(id){ var it=cart.filter(function(i){return i.id===id})[0]; if(it) it.qty++; else cart.push({id:id,qty:1}); save(); renderCart(); toast("Adicionado ao carrinho"); }
-function setQty(id,d){ var it=cart.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty+=d; if(it.qty<1) cart=cart.filter(function(i){return i.id!==id}); save(); renderCart(); }
-function openCart(){ $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden","false"); $("#veil").classList.add("on"); }
-function closeAll(){ $("#drawer").classList.remove("on"); $("#drawer").setAttribute("aria-hidden","true"); $("#veil").classList.remove("on"); $("#modal").classList.remove("on"); }
-var tt; function toast(m){ var t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove("on")},1800); }
 
-/* ---------- produto ---------- */
-function openProd(id){
-  var p=prod(id);
-  $("#sheet").innerHTML='<button class="x" data-close-modal aria-label="Fechar">×</button>'+galeria(p)+'<div class="info"><span class="cat-name eyebrow">'+catNome(p.cat)+'</span><h2>'+(p.nomeCompleto||p.nome)+'</h2><p style="color:var(--muted)">'+p.desc+'</p>'+(p.variacoes?'<p style="font-size:.9rem"><b>Opções disponíveis:</b> '+p.variacoes+'. A escolha é feita no atendimento.</p>':'')+'<div class="price">'+precoHTML(p)+'</div><ul><li>Entrega para todo o Brasil</li><li>Parcelamento sem juros em todos os cartões</li><li>Troca em até 7 dias, sem uso e na embalagem original</li></ul><button class="btn" data-add="'+p.id+'" data-then-cart>Adicionar ao carrinho</button><a class="btn ghost" href="'+waLink("Olá! Tenho uma dúvida sobre: "+p.nome)+'" target="_blank" rel="noopener">Tirar dúvida no WhatsApp</a></div>';
-  $("#modal").classList.add("on"); $("#veil").classList.add("on");
-}
-
-/* ---------- eventos ---------- */
-document.addEventListener("click",function(e){
-  var t=e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-close-cart],[data-close-modal],[data-img]");
-  if(!t){ if(e.target.id==="modal"||e.target.id==="veil") closeAll(); return; }
-  var d=t.dataset;
-  if(d.add){ addCart(d.add); if(t.hasAttribute("data-then-cart")){ $("#modal").classList.remove("on"); openCart(); } }
-  else if(d.open) openProd(d.open);
-  else if(d.cat){ filtro=d.cat; renderTools(); renderGrid(); $("#catalogo").scrollIntoView(); }
-  else if(d.filter){ filtro=d.filter; renderTools(); renderGrid(); }
-  else if(d.img){ document.querySelector("#mainArt img").src=d.img; document.querySelectorAll(".thumbs button").forEach(function(b){ b.setAttribute("aria-current",String(b===t)); }); }
-  else if(d.inc) setQty(d.inc,1);
-  else if(d.dec) setQty(d.dec,-1);
-  else if(d.rm) setQty(d.rm,-999);
-  else if(t.hasAttribute("data-copy")){
-    var txt=pedidoTexto();
-    var ok=function(){toast("Pedido copiado")}, no=function(){toast("Não foi possível copiar. Selecione o texto manualmente.")};
-    try{ navigator.clipboard.writeText(txt).then(ok,no); }catch(err){ no(); }
+  var f = CONFIG.freteGratisAcima;
+  if (f > 0) {
+    var falta = f - st;
+    document.getElementById("shipBox").innerHTML = falta > 0 ? 'Faltam <b>' + fmt.format(falta) + '</b> para ganhar frete grátis.<div class="bar"><i style="width:' + Math.min(100, (st / f) * 100) + '%"></i></div>' : 'Você ganhou frete grátis.';
+  } else {
+    document.getElementById("shipBox").innerHTML = '';
   }
-  else if(t.hasAttribute("data-close-cart")||t.hasAttribute("data-close-modal")) closeAll();
-});
-document.addEventListener("change",function(e){ if(e.target.id==="sort"){ ordem=e.target.value; renderGrid(); } });
-document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeAll(); });
-$("#openCart").addEventListener("click",openCart);
-$("#closeCart").addEventListener("click",closeAll);
 
-/* ---------- contagem regressiva ---------- */
-function tick(){
-  var fim=new Date(CONFIG.prazoPedidos).getTime(), ms=fim-Date.now();
-  if(isNaN(fim)||ms<=0){ $("#promo").hidden=true; return; }
-  var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1e3);
-  var z=function(n){return String(n).padStart(2,"0")};
-  $("#count").textContent=d+"d "+z(h)+"h "+z(m)+"min "+z(s)+"s";
+  var h = '<div class="row"><span>Subtotal</span><span>' + fmt.format(st) + '</span></div>';
+  if (CONFIG.pixDesconto > 0) h += '<div class="row" style="color:var(--ok)"><span>No Pix (' + CONFIG.pixDesconto + '% off)</span><span>' + fmt.format(st * (1 - CONFIG.pixDesconto / 100)) + '</span></div>';
+  h += '<div class="row total"><span>Total</span><span>' + fmt.format(st) + '</span></div><small>Pagamento seguro pela AtenasPay.</small>';
+  h += '<button class="btn" id="checkoutBtn" type="button">Pagar com AtenasPay</button>';
+  document.getElementById("sum").innerHTML = h;
+  document.getElementById("checkoutBtn").addEventListener("click", createAtenasPayCheckout);
 }
 
-/* ---------- início ---------- */
-$("#promoDate").textContent=new Date(CONFIG.prazoPedidos).toLocaleDateString("pt-BR",{day:"numeric",month:"long"});
-if(CONFIG.pixDesconto>0) $("#pixPerk").textContent=CONFIG.pixDesconto+"% de desconto no Pix";
-$("#footWa").textContent=fmtFone(CONFIG.whatsapp);
-if(CONFIG.email) $("#footMail").textContent="E-mail: "+CONFIG.email;
-if(CONFIG.cnpj) $("#footCnpj").textContent="CNPJ: "+CONFIG.cnpj;
-$("#fab").href=waLink("Olá! Vim pelo site da Magia Natalina e gostaria de ajuda.");
-heroArt(); renderCats(); renderTools(); renderGrid(); renderDepo(); renderCart(); tick(); setInterval(tick,1000);
-</script>
+function closeAll(){
+  document.getElementById("drawer").classList.remove("on");
+  document.getElementById("drawer").setAttribute("aria-hidden", "true");
+  document.getElementById("veil").classList.remove("on");
+  document.getElementById("modal").classList.remove("on");
+  var panel = document.getElementById("checkoutModal");
+  if (panel) panel.classList.remove("on");
+}
+
+function toast(m){
+  var t = document.getElementById("toast");
+  t.textContent = m;
+  t.classList.add("on");
+  clearTimeout(window.__toast_timer);
+  window.__toast_timer = setTimeout(function(){ t.classList.remove("on"); }, 1800);
+}
+
+document.addEventListener("click", function(e){
+  var t = e.target.closest("[data-add],[data-open],[data-cat],[data-filter],[data-inc],[data-dec],[data-rm],[data-copy],[data-close-cart],[data-close-modal],[data-img]");
+  if (!t) {
+    if (e.target.id === "modal" || e.target.id === "veil") closeAll();
+    return;
+  }
+
+  var d = t.dataset;
+  if (d.add) { addCart(d.add); if (t.hasAttribute("data-then-cart")) { document.getElementById("modal").classList.remove("on"); openCart(); } }
+  else if (d.open) openProd(d.open);
+  else if (d.cat) { filtro = d.cat; renderTools(); renderGrid(); document.getElementById("catalogo").scrollIntoView(); }
+  else if (d.filter) { filtro = d.filter; renderTools(); renderGrid(); }
+  else if (d.img) { document.querySelector("#mainArt img").src = d.img; document.querySelectorAll(".thumbs button").forEach(function(b){ b.setAttribute("aria-current", String(b === t)); }); }
+  else if (d.inc) setQty(d.inc, 1);
+  else if (d.dec) setQty(d.dec, -1);
+  else if (d.rm) setQty(d.rm, -999);
+  else if (t.hasAttribute("data-copy")) {
+    var txt = pedidoTexto();
+    try { navigator.clipboard.writeText(txt).then(function(){ toast("Pedido copiado"); }, function(){ toast("Não foi possível copiar"); }); } catch (err) { toast("Não foi possível copiar"); }
+  }
+  else if (t.hasAttribute("data-close-cart") || t.hasAttribute("data-close-modal")) closeAll();
+});
+
+function addCart(id){ var it = cart.filter(function(i){ return i.id === id; })[0]; if (it) it.qty++; else cart.push({ id: id, qty: 1 }); save(); renderCart(); toast("Adicionado ao carrinho"); }
+function setQty(id, d){ var it = cart.filter(function(i){ return i.id === id; })[0]; if (!it) return; it.qty += d; if (it.qty < 1) cart = cart.filter(function(i){ return i.id !== id; }); save(); renderCart(); }
+function openCart(){ document.getElementById("drawer").classList.add("on"); document.getElementById("drawer").setAttribute("aria-hidden", "false"); document.getElementById("veil").classList.add("on"); }
+
+var checkoutModal = document.createElement('div');
+checkoutModal.id = 'checkoutModal';
+checkoutModal.className = 'modal';
+checkoutModal.setAttribute('role', 'dialog');
+checkoutModal.setAttribute('aria-modal', 'true');
+checkoutModal.setAttribute('aria-label', 'Pagamento via Pix');
+document.body.appendChild(checkoutModal);
+
+window.addEventListener('DOMContentLoaded', function(){
+  renderCart();
+});
