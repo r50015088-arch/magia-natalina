@@ -192,6 +192,10 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 .ceprow .btn{padding:.5rem 1rem;min-height:42px}
 #cepmsg{font-size:.85rem;margin-top:.4rem;color:var(--muted)}
 .selos{display:flex;flex-wrap:wrap;justify-content:center;gap:20px 28px;padding:28px 16px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:40px 0 0}
+.faixa-entrega{display:flex;flex-wrap:wrap;gap:16px 24px;justify-content:center;padding:16px;font-size:13px;color:var(--muted);margin-top:24px}
+.faixa-entrega div{display:flex;align-items:center;gap:8px}
+.faixa-entrega .ic{color:#7a1f1f;display:inline-flex}
+.faixa-entrega strong{color:var(--fg)}
 .selo{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 .selo .ico{width:42px;height:42px;background:#7a1f1f;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
 .selo strong{display:block;color:var(--fg)}
@@ -265,6 +269,12 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
   <details><summary>Quanto tempo leva para chegar?</summary><p>Depende da sua região. Informamos o prazo no atendimento, e por isso vale pedir com antecedência para receber antes do Natal.</p></details>
 </div></section>
 </main>
+<!-- FAIXA DE ENTREGA -->
+<div class="faixa-entrega" aria-label="Entrega">
+  <div><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 5v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><strong>Entrega Nacional</strong></div>
+  <div><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><strong>Prazo Combinado</strong></div>
+  <div><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><strong>Receba antes do Natal</strong></div>
+</div>
 <!-- SELOS DE SEGURANÇA -->
 <section class="selos" aria-label="Segurança da compra">
   <div class="selo"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f5d76e" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><div><strong>Compra Segura</strong><span>Ambiente protegido</span></div></div>
