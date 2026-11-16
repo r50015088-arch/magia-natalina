@@ -996,18 +996,36 @@ function pixSheet(html){ $("#sheet").className="sheet pix"; $("#sheet").innerHTM
 function pixErro(cod){
   pixSheet('<h2>Não foi possível gerar o Pix agora</h2><p style="color:var(--muted)">Seu carrinho continua salvo. Você pode finalizar pelo WhatsApp e nossa equipe envia o Pix para você.</p><a class="btn wa" href="'+waLink(pedidoTexto())+'" target="_blank" rel="noopener">Finalizar pelo WhatsApp</a><button class="btn ghost" data-pix>Tentar novamente</button>'+(cod?'<small>Código do erro: '+hx(String(cod).slice(0,260))+'</small>':''));
 }
+var CEPFAIXAS=[[1000,19999,"SP"],[20000,28999,"RJ"],[29000,29999,"ES"],[30000,39999,"MG"],[40000,48999,"BA"],[49000,49999,"SE"],[50000,56999,"PE"],[57000,57999,"AL"],[58000,58999,"PB"],[59000,59999,"RN"],[60000,63999,"CE"],[64000,64999,"PI"],[65000,65999,"MA"],[66000,68899,"PA"],[68900,68999,"AP"],[69000,69299,"AM"],[69300,69399,"RR"],[69400,69899,"AM"],[69900,69999,"AC"],[70000,72799,"DF"],[72800,72999,"GO"],[73000,73699,"DF"],[73700,76799,"GO"],[76800,76999,"RO"],[77000,77999,"TO"],[78000,78899,"MT"],[78900,78999,"RO"],[79000,79999,"MS"],[80000,87999,"PR"],[88000,89999,"SC"],[90000,99999,"RS"]];
+function ufPorCep(c){ var n=parseInt(c.slice(0,5),10); for(var k=0;k<CEPFAIXAS.length;k++){ if(n>=CEPFAIXAS[k][0]&&n<=CEPFAIXAS[k][1]) return CEPFAIXAS[k][2]; } return null; }
+function buscaJson(url){ var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},6000); return fetch(url,{signal:ctl.signal}).then(function(r){ clearTimeout(to); return r.json().then(function(d){ return {status:r.status,d:d}; }); },function(e){ clearTimeout(to); throw e; }); }
+function consultaCep(c){
+  // 1) ViaCEP  2) BrasilAPI  3) estado pela faixa do CEP (funciona mesmo sem internet externa)
+  return buscaJson("https://viacep.com.br/ws/"+c+"/json/").then(function(x){
+    if(x.d&&x.d.erro) return {naoExiste:true};
+    if(x.d&&UFREG[x.d.uf]) return {uf:x.d.uf,cidade:x.d.localidade||""};
+    throw new Error("viacep");
+  }).catch(function(){
+    return buscaJson("https://brasilapi.com.br/api/cep/v1/"+c).then(function(x){
+      if(x.d&&UFREG[x.d.state]) return {uf:x.d.state,cidade:x.d.city||""};
+      if(x.status===404) throw new Error("brasilapi404");
+      throw new Error("brasilapi");
+    });
+  }).catch(function(){
+    var uf=ufPorCep(c); if(uf) return {uf:uf,cidade:""};
+    return {naoExiste:true};
+  });
+}
 function calcCep(){
   var el=$("#cep"), c=(el?el.value:"").replace(/\D/g,""), msg=$("#cepmsg");
   if(c.length!==8){ msg.textContent="Digite um CEP com 8 números."; msg.style.color="var(--accent,#b3261e)"; return; }
   msg.textContent="Consultando CEP…"; msg.style.color="";
-  var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},8000);
-  fetch("https://viacep.com.br/ws/"+c+"/json/",{signal:ctl.signal}).then(function(r){return r.json()}).then(function(d){
-    clearTimeout(to);
-    if(!d||d.erro||!UFREG[d.uf]){ msg.textContent="CEP não encontrado. Confira os números."; msg.style.color="var(--accent,#b3261e)"; return; }
-    ship={cep:c,uf:d.uf,cidade:d.localidade||""};
+  consultaCep(c).then(function(d){
+    if(d.naoExiste){ msg.textContent="CEP não encontrado. Confira os números."; msg.style.color="var(--accent,#b3261e)"; return; }
+    ship={cep:c,uf:d.uf,cidade:d.cidade};
     try{ localStorage.setItem("mn-cep",JSON.stringify(ship)); }catch(e){}
-    renderCart(); toast("Frete calculado");
-  }).catch(function(){ clearTimeout(to); msg.textContent="Não foi possível consultar o CEP agora. Tente de novo ou fale no WhatsApp."; msg.style.color="var(--accent,#b3261e)"; });
+    renderCart(); toast("Prazo calculado");
+  });
 }
 function pagarPix(){
   if(!cart.length) return;
