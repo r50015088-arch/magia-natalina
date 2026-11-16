@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Pedidos — Magia Natalina</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#faf5f4;--surface:#fff;--fg:#2a1519;--muted:#6c5156;--line:#e9dcd8;--brand:#8b1a2b;--brand-ink:#fff;--ok:#1c6b4a;--warn:#8a6212;--err:#b3261e;--display:'Marcellus',Georgia,serif;--body:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#190b0e;--surface:#261318;--fg:#f6ebe8;--muted:#c5aaae;--line:#3d252b;--brand:#b02a40;--ok:#6fcf9f;--warn:#e3b95f;--err:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#190b0e;--surface:#261318;--fg:#f6ebe8;--muted:#c5aaae;--line:#3d252b;--brand:#b02a40;--ok:#6fcf9f;--warn:#e3b95f;--err:#ff8a80;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.5;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:900px;margin:0 auto}
+h1{font-family:var(--display);font-weight:400;margin:0 0 .2rem;font-size:1.7rem}
+p{margin:.2rem 0;color:var(--muted)}
+input,select,button{font:inherit}
+input,select{border:1px solid var(--line);border-radius:10px;padding:.6rem .75rem;background:var(--surface);color:var(--fg);min-height:44px;min-width:0}
+.btn{border:0;border-radius:999px;padding:.55rem 1.1rem;font-weight:700;background:var(--brand);color:var(--brand-ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:40px}
+.btn.wa{background:#1f7a4d;color:#fff}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.bar{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem;margin-top:.8rem}
+.top{display:flex;flex-wrap:wrap;gap:.4rem .8rem;justify-content:space-between;align-items:baseline}
+.top b{font-size:1.05rem}
+.tag{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:.1rem .45rem;border:1px solid currentColor;margin-left:.3rem}
+.pago{color:var(--ok)}.aguardando{color:var(--warn)}.expirado{color:var(--err)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.4rem 1.2rem;margin:.7rem 0;font-size:.93rem}
+.grid span{display:block;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.grid div{min-width:0;overflow-wrap:anywhere}
+ul{margin:.3rem 0 .6rem;padding-left:1.1rem;font-size:.93rem}
+.acoes{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
+#msg{color:var(--err);min-height:1.2em}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>Pedidos da loja</h1>
+<p>Área privada da Magia Natalina. Os dados são de clientes: não compartilhe esta tela.</p>
+
+<form class="bar" id="login">
+  <input id="token" type="password" placeholder="Senha da loja (ADMIN_TOKEN)" autocomplete="current-password" aria-label="Senha da loja" style="flex:1;min-width:220px">
+  <button class="btn" type="submit">Entrar</button>
+</form>
+<div id="msg" role="alert"></div>
+
+<div id="painel" hidden>
+  <div class="bar">
+    <select id="filtro" aria-label="Filtro">
+      <option value="contatar">Pagos a contatar</option>
+      <option value="pagos">Todos os pagos</option>
+      <option value="aguardando">Aguardando pagamento</option>
+      <option value="todos">Todos</option>
+    </select>
+    <button class="btn ghost" id="atualizar">Atualizar</button>
+    <button class="btn ghost" id="csv">Baixar planilha (CSV)</button>
+    <button class="btn ghost" id="sair">Sair</button>
+  </div>
+  <p id="resumo"></p>
+  <div id="lista"></div>
+</div>
+</main>
+<script>
+var API="https://magia-pix06a4.r50015088.workers.dev";
+var fmt=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+function $(s){return document.querySelector(s)}
+function hx(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+var token="", dados=[];
+try{ token=sessionStorage.getItem("mn-admin")||""; }catch(e){}
+
+function cpf(c){ return String(c||"").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4"); }
+function tel(t){ t=String(t||""); return t.length===11?t.replace(/^(\d{2})(\d{5})(\d{4})$/,"($1) $2-$3"):t.replace(/^(\d{2})(\d{4})(\d{4})$/,"($1) $2-$3"); }
+function data(ts){ return ts?new Date(ts).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""; }
+function nasc(n){ return String(n||"").split("-").reverse().join("/"); }
+function ped(p,path,body){
+  return fetch(API+path,{method:body?"POST":"GET",headers:Object.assign({"Authorization":"Bearer "+token},body?{"Content-Type":"application/json"}:{}),body:body?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(d){return {s:r.status,d:d}})});
+}
+function carregar(){
+  $("#msg").textContent="";
+  ped(null,"/admin/pedidos").then(function(r){
+    if(r.s===401){ $("#msg").textContent="Senha incorreta."; sair(true); return; }
+    if(r.s===503){ $("#msg").textContent="A área de pedidos ainda não foi configurada no Cloudflare (ADMIN_TOKEN e PEDIDOS)."; return; }
+    if(!r.d||!r.d.ok){ $("#msg").textContent="Não foi possível carregar os pedidos."; return; }
+    dados=r.d.pedidos; try{ sessionStorage.setItem("mn-admin",token); }catch(e){}
+    $("#login").hidden=true; $("#painel").hidden=false; desenhar();
+  }).catch(function(){ $("#msg").textContent="Sem conexão com o servidor."; });
+}
+function filtrados(){
+  var f=$("#filtro").value;
+  return dados.filter(function(p){
+    if(f==="contatar") return p.status==="pago"&&(p.andamento||"novo")==="novo";
+    if(f==="pagos") return p.status==="pago";
+    if(f==="aguardando") return p.status==="aguardando";
+    return true;
+  });
+}
+function msgWa(p){
+  var c=p.cliente||{}, nome=(c.nome||"").split(" ")[0];
+  return "Olá, "+nome+"! Aqui é da Magia Natalina. Recebemos o pagamento do seu pedido "+p.pedido+" ("+fmt.format(p.total)+"). Para confirmar a entrega, pode me enviar o endereço completo (rua, número, complemento e bairro)? CEP informado: "+(p.cep||"")+".";
+}
+function desenhar(){
+  var l=filtrados();
+  $("#resumo").textContent=l.length+" pedido(s) · "+dados.filter(function(p){return p.status==="pago"}).length+" pago(s) no total";
+  $("#lista").innerHTML=l.length?l.map(function(p){
+    var c=p.cliente||{}, st=p.status||"aguardando", an=p.andamento||"novo";
+    return '<article class="card"><div class="top"><div><b>'+hx(p.pedido)+'</b><span class="tag '+hx(st)+'">'+hx(st)+'</span><span class="tag">'+hx(an)+'</span></div><span>'+hx(data(p.criado))+'</span></div>'
+    +'<div class="grid"><div><span>Nome</span>'+hx(c.nome)+'</div><div><span>WhatsApp</span>'+hx(tel(c.tel))+'</div><div><span>E-mail</span>'+hx(c.email)+'</div><div><span>CPF</span>'+hx(cpf(c.cpf))+'</div><div><span>Nascimento</span>'+hx(nasc(c.nasc))+'</div><div><span>CEP</span>'+hx(p.cep)+'</div><div><span>Total</span><b>'+hx(fmt.format(p.total||0))+'</b> (frete '+(p.frete?hx(fmt.format(p.frete)):"grátis")+')</div></div>'
+    +'<ul>'+(p.itens||[]).map(function(i){return '<li>'+hx(i.qty)+'x '+hx(i.nome)+'</li>'}).join("")+'</ul>'
+    +'<div class="acoes"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/55'+hx(c.tel)+'?text='+encodeURIComponent(msgWa(p))+'">Chamar no WhatsApp</a>'
+    +(an!=="contatado"?'<button class="btn ghost" data-a="contatado" data-p="'+hx(p.pedido)+'">Marcar como contatado</button>':'')
+    +(an!=="enviado"?'<button class="btn ghost" data-a="enviado" data-p="'+hx(p.pedido)+'">Marcar como enviado</button>':'')
+    +(an!=="novo"?'<button class="btn ghost" data-a="novo" data-p="'+hx(p.pedido)+'">Voltar para novo</button>':'')
+    +'</div></article>';
+  }).join(""):'<p>Nenhum pedido neste filtro.</p>';
+}
+function sair(manter){ token=""; try{ sessionStorage.removeItem("mn-admin"); }catch(e){} $("#painel").hidden=true; $("#login").hidden=false; if(!manter) $("#msg").textContent=""; }
+function csvCel(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }
+function baixarCsv(){
+  var cab=["Pedido","Data","Pagamento","Andamento","Nome","WhatsApp","E-mail","CPF","Nascimento","CEP","Itens","Total","Frete"];
+  var linhas=filtrados().map(function(p){ var c=p.cliente||{}; return [p.pedido,data(p.criado),p.status,p.andamento||"novo",c.nome,tel(c.tel),c.email,cpf(c.cpf),nasc(c.nasc),p.cep,(p.itens||[]).map(function(i){return i.qty+"x "+i.nome}).join(" | "),String(p.total||0).replace(".",","),String(p.frete||0).replace(".",",")].map(csvCel).join(";"); });
+  var blob=new Blob(["﻿"+[cab.map(csvCel).join(";")].concat(linhas).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pedidos-magia-natalina.csv"; document.body.appendChild(a); a.click(); a.remove();
+}
+$("#login").addEventListener("submit",function(e){ e.preventDefault(); token=$("#token").value.trim(); if(token) carregar(); });
+$("#filtro").addEventListener("change",desenhar);
+$("#atualizar").addEventListener("click",carregar);
+$("#csv").addEventListener("click",baixarCsv);
+$("#sair").addEventListener("click",function(){ sair(); });
+$("#lista").addEventListener("click",function(e){
+  var b=e.target.closest("button[data-a]"); if(!b) return; b.disabled=true;
+  ped(null,"/admin/andamento",{pedido:b.dataset.p,andamento:b.dataset.a}).then(function(r){ if(r.d&&r.d.ok){ dados.forEach(function(p){ if(p.pedido===b.dataset.p) p.andamento=b.dataset.a; }); desenhar(); } else { b.disabled=false; $("#msg").textContent="Não foi possível salvar."; } }).catch(function(){ b.disabled=false; });
+});
+if(token) carregar();
+</script>
+</body>
+</html>
