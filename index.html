@@ -1145,9 +1145,7 @@ function mostrarPix(d){
   if(d.qr){ var im=new Image(); im.alt="QR Code Pix"; im.src=d.qr; box.appendChild(im); }
   else if(window.QRCode&&d.code){ try{ new QRCode(box,{text:d.code,width:210,height:210,correctLevel:QRCode.CorrectLevel.L}); }catch(e){ box.hidden=true; } }
   else box.hidden=true;
-  var fim=Date.now()+30*60*1000, el=$("#pixtempo");
-  function t(){ var s=Math.max(0,Math.round((fim-Date.now())/1000)); el.textContent= s>0 ? "Este Pix vale por "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0") : "Este Pix expirou. Feche e gere um novo."; if(s<=0) clearInterval(pixTimer); }
-  t(); pixTimer=setInterval(t,1000);
+  $("#pixtempo").textContent="Pague pelo app do seu banco e toque no botão abaixo. Se o código não funcionar, gere um novo Pix.";
 }
 
 /* ---------- produto ---------- */

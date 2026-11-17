@@ -77,12 +77,12 @@ function pago(){
 }
 function expirou(){
   fim=true; clearInterval(timer);
-  $("#card").innerHTML='<div class="warnic">!</div><h1>Este Pix expirou</h1><p>Não identificamos o pagamento dentro do prazo. Se você já pagou, avise a gente pelo WhatsApp. Se não, é só gerar um novo Pix.</p>'+resumo()+'<a class="btn wa" target="_blank" rel="noopener" href="'+wa(msgWa("Já paguei o Pix, mas a confirmação não apareceu."))+'">Já paguei — avisar no WhatsApp</a><a class="btn ghost" href="./">Gerar novo Pix na loja</a>';
+  $("#card").innerHTML='<div class="warnic">!</div><h1>Este Pix expirou</h1><p>O prazo deste Pix terminou. Se você já pagou, avise a gente pelo WhatsApp. Se não, é só gerar um novo Pix.</p>'+resumo()+'<a class="btn wa" target="_blank" rel="noopener" href="'+wa(msgWa("Já paguei o Pix, mas a confirmação não apareceu."))+'">Já paguei — avisar no WhatsApp</a><a class="btn ghost" href="./">Gerar novo Pix na loja</a>';
 }
 function tique(){
   var el=$("#tempo"), ajuda=$("#ajuda"); if(!el) return;
   var criado=ped&&ped.criado?ped.criado:t0, resta=Math.max(0,Math.round((criado+VALIDADE-Date.now())/1000));
-  el.textContent= resta>0 ? "Este Pix vale por mais "+Math.floor(resta/60)+":"+String(resta%60).padStart(2,"0")+"." : "";
+  el.textContent="";
   if(ajuda&&(Date.now()-t0>90000||desconhecidos>=3)) ajuda.hidden=false;
 }
 function consulta(){
@@ -91,7 +91,7 @@ function consulta(){
     if(!d||!d.ok) return;
     if(d.status==="pago") pago();
     else if(d.status==="expirado") expirou();
-    else { if(d.status==="desconhecido") desconhecidos++; if(ped&&ped.criado&&Date.now()>ped.criado+VALIDADE+60000) expirou(); }
+    else { if(d.status==="desconhecido") desconhecidos++; }
   }).catch(function(){});
 }
 if(!/^MN[0-9A-Z]{6,}$/.test(id)){
