@@ -53,6 +53,7 @@ ul{margin:.3rem 0 .6rem;padding-left:1.1rem;font-size:.93rem}
       <option value="pagos">Todos os pagos</option>
       <option value="aguardando">Aguardando pagamento</option>
       <option value="todos">Todos</option>
+      <option value="cadastros">Cadastros sem compra</option>
     </select>
     <button class="btn ghost" id="atualizar">Atualizar</button>
     <button class="btn ghost" id="csv">Baixar planilha (CSV)</button>
@@ -67,7 +68,7 @@ var API="https://magia-pix06a4.r50015088.workers.dev";
 var fmt=new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
 function $(s){return document.querySelector(s)}
 function hx(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-var token="", dados=[];
+var token="", dados=[], cads=[];
 try{ token=sessionStorage.getItem("mn-admin")||""; }catch(e){}
 
 function cpf(c){ return String(c||"").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,"$1.$2.$3-$4"); }
@@ -83,12 +84,14 @@ function carregar(){
     if(r.s===401){ $("#msg").textContent="Senha incorreta."; sair(true); return; }
     if(r.s===503){ $("#msg").textContent="A área de pedidos ainda não foi configurada no Cloudflare (ADMIN_TOKEN e PEDIDOS)."; return; }
     if(!r.d||!r.d.ok){ $("#msg").textContent="Não foi possível carregar os pedidos."; return; }
-    dados=r.d.pedidos; try{ sessionStorage.setItem("mn-admin",token); }catch(e){}
+    dados=r.d.pedidos; cads=r.d.cadastros||[]; try{ sessionStorage.setItem("mn-admin",token); }catch(e){}
     $("#login").hidden=true; $("#painel").hidden=false; desenhar();
   }).catch(function(){ $("#msg").textContent="Sem conexão com o servidor."; });
 }
+function semCompra(){ var com={}; dados.forEach(function(p){ if(p.cliente&&p.cliente.email) com[p.cliente.email]=1; }); return cads.filter(function(c){ return c.cliente&&!com[c.cliente.email]; }); }
 function filtrados(){
   var f=$("#filtro").value;
+  if(f==="cadastros") return semCompra();
   return dados.filter(function(p){
     if(f==="contatar") return p.status==="pago"&&(p.andamento||"novo")==="novo";
     if(f==="pagos") return p.status==="pago";
@@ -100,8 +103,19 @@ function msgWa(p){
   var c=p.cliente||{}, nome=(c.nome||"").split(" ")[0];
   return "Olá, "+nome+"! Aqui é da Magia Natalina. Recebemos o pagamento do seu pedido "+p.pedido+" ("+fmt.format(p.total)+"). Para confirmar a entrega, pode me enviar o endereço completo (rua, número, complemento e bairro)? CEP informado: "+(p.cep||"")+".";
 }
+function desenharCadastros(l){
+  $("#resumo").textContent=l.length+" cadastro(s) sem compra · só envie promoções a quem aceitou receber ofertas";
+  $("#lista").innerHTML=l.length?l.map(function(x){
+    var c=x.cliente||{}, nome=(c.nome||"").split(" ")[0];
+    var m="Olá, "+nome+"! Aqui é da Magia Natalina. Vi que você se cadastrou na nossa loja. Posso ajudar a escolher seus enfeites de Natal?";
+    return '<article class="card"><div class="top"><div><b>Cadastro</b><span class="tag '+(x.ofertas?'pago':'')+'">'+(x.ofertas?'aceita ofertas':'sem ofertas')+'</span></div><span>'+hx(data(x.criado))+'</span></div>'
+    +'<div class="grid"><div><span>Nome</span>'+hx(c.nome)+'</div><div><span>WhatsApp</span>'+hx(tel(c.tel))+'</div><div><span>E-mail</span>'+hx(c.email)+'</div><div><span>CPF</span>'+hx(cpf(c.cpf))+'</div><div><span>Nascimento</span>'+hx(nasc(c.nasc))+'</div></div>'
+    +'<div class="acoes"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/55'+hx(c.tel)+'?text='+encodeURIComponent(m)+'">Chamar no WhatsApp</a></div></article>';
+  }).join(""):'<p>Nenhum cadastro sem compra.</p>';
+}
 function desenhar(){
   var l=filtrados();
+  if($("#filtro").value==="cadastros"){ desenharCadastros(l); return; }
   $("#resumo").textContent=l.length+" pedido(s) · "+dados.filter(function(p){return p.status==="pago"}).length+" pago(s) no total";
   $("#lista").innerHTML=l.length?l.map(function(p){
     var c=p.cliente||{}, st=p.status||"aguardando", an=p.andamento||"novo";
@@ -117,7 +131,14 @@ function desenhar(){
 }
 function sair(manter){ token=""; try{ sessionStorage.removeItem("mn-admin"); }catch(e){} $("#painel").hidden=true; $("#login").hidden=false; if(!manter) $("#msg").textContent=""; }
 function csvCel(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }
+function baixarCsvCadastros(){
+  var cab=["Data","Nome","WhatsApp","E-mail","CPF","Nascimento","Aceita ofertas"];
+  var linhas=semCompra().map(function(x){ var c=x.cliente||{}; return [data(x.criado),c.nome,tel(c.tel),c.email,cpf(c.cpf),nasc(c.nasc),x.ofertas?"sim":"nao"].map(csvCel).join(";"); });
+  var blob=new Blob(["\ufeff"+[cab.map(csvCel).join(";")].concat(linhas).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  var l=document.createElement("a"); l.href=URL.createObjectURL(blob); l.download="cadastros-magia-natalina.csv"; document.body.appendChild(l); l.click(); l.remove();
+}
 function baixarCsv(){
+  if($("#filtro").value==="cadastros"){ baixarCsvCadastros(); return; }
   var cab=["Pedido","Data","Pagamento","Andamento","Nome","WhatsApp","E-mail","CPF","Nascimento","CEP","Itens","Total","Frete"];
   var linhas=filtrados().map(function(p){ var c=p.cliente||{}; return [p.pedido,data(p.criado),p.status,p.andamento||"novo",c.nome,tel(c.tel),c.email,cpf(c.cpf),nasc(c.nasc),p.cep,(p.itens||[]).map(function(i){return i.qty+"x "+i.nome}).join(" | "),String(p.total||0).replace(".",","),String(p.frete||0).replace(".",",")].map(csvCel).join(";"); });
   var blob=new Blob(["﻿"+[cab.map(csvCel).join(";")].concat(linhas).join("\r\n")],{type:"text/csv;charset=utf-8"});
