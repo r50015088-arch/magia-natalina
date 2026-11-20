@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Magia Natalina</title>
 <meta name="description" content="Decoração de Natal com até 40% OFF na Black Friday: enfeites, luzes LED, guirlandas e presépios. Pix com desconto e envio para todo o Brasil.">
 <meta name="theme-color" content="#8b1a2b">
@@ -32,7 +37,10 @@
   --hero-bg:#3d0a15; --art-bg:#38202a; --ok:#6fcf9f; --err:#ff8a80; color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg)}
+img{max-width:100%}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
 .wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -242,7 +250,48 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 @media (max-width:640px){.sheet{grid-template-columns:1fr}.sheet .art{height:auto}}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:.6rem 1.1rem;border-radius:999px;z-index:90;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
 .toast.on{opacity:1}
+
+/* ===== Mobile e confiança (v2) ===== */
+.pixstate{text-align:center;padding:1.2rem .5rem}
+.pixspin{width:54px;height:54px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--brand);margin:0 auto 1rem;animation:pixg 1s linear infinite}
+@keyframes pixg{to{transform:rotate(360deg)}}
+.pixok{width:72px;height:72px;border-radius:50%;background:var(--ok);color:#fff;font-size:2.4rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+.pixwait::after{content:"";animation:pixd 1.4s steps(4) infinite}
+@keyframes pixd{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+@media (prefers-reduced-motion:reduce){.pixspin{animation-duration:3s}.pixwait::after{animation:none;content:"..."}}
+
+.cnpj-destaque{margin:0 0 1.4rem;padding:.8rem 1rem;border:1px solid var(--line);border-left:4px solid var(--green);background:var(--bg);border-radius:10px;font-size:.95rem}
+.safe .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem}
+.safe .cols h3{font-size:1.15rem;margin:0 0 .35rem}
+.safe .cols p{margin:0;line-height:1.6}
+@media (max-width:640px){
+  body{font-size:16px;line-height:1.6}
+  h1{font-size:clamp(2rem,9vw,2.4rem);line-height:1.15;letter-spacing:.005em}
+  h2{font-size:1.6rem;line-height:1.2}
+  h3{line-height:1.25}
+  .wrap{padding-inline:max(16px,env(safe-area-inset-left,0px))}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+  .card .body{padding:.7rem .7rem .8rem;gap:.3rem}
+  .card .cat-name{font-size:.68rem;letter-spacing:.06em}
+  .card h3{font-size:1rem;line-height:1.25;font-family:var(--body);font-weight:700}
+  .card .desc{display:none}
+  .card h3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .price b{font-size:1.15rem}
+  .price small{font-size:.78rem}
+  .card .btn{min-height:46px;font-size:.95rem;padding-inline:.5rem}
+  .tools{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:-16px;padding:0 16px .4rem}
+  .tools::-webkit-scrollbar{display:none}
+  .tools>*{flex:0 0 auto}
+  .tools select{margin-left:0}
+  .chip{min-height:44px;font-size:.95rem;padding:.5rem 1rem}
+  .btn{min-height:48px}
+  input,select,textarea{font-size:16px!important}
+  .drawer{width:100%;max-width:100%}
+  .safe .cols{grid-template-columns:1fr}
+}
 </style>
+</head>
+<body>
 
 <div class="bfbar" id="bfbar" hidden><div class="wrap"><b>BLACK FRIDAY</b><span><span id="bfPct"></span>% OFF em todo o site + frete grátis a partir de <span id="bfFrete"></span></span><span class="bfate">até <span id="bfAte"></span></span></div></div>
 <div class="promo" id="promo"><div class="wrap"><span>Peça até <span id="promoDate"></span> para receber antes do Natal</span><b id="count" aria-live="off"></b></div></div>
@@ -284,21 +333,23 @@ footer .copy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.2);padding-
 </div></section>
 
 <section class="safe" id="compra-segura"><div class="wrap">
-  <div class="head"><div><span class="eyebrow">Compra tranquila</span><h2>Do pedido à sua porta</h2></div></div>
+  <div class="head"><div><span class="eyebrow">Compra segura</span><h2>Do pedido à sua porta</h2></div></div>
+  <p class="cnpj-destaque"><strong>Magia Natalina</strong> · CNPJ <span id="safeCnpj"></span> · Enviamos de Santos/SP para todo o Brasil</p>
   <div class="cols">
-    <div><h3>Atendimento humano</h3><p>Você monta o carrinho aqui e finaliza a compra conversando com a gente pelo WhatsApp. Tiramos dúvidas, confirmamos o frete e o prazo.</p></div>
-    <div><h3>Pague com Pix</h3><p>Pagamento por Pix, com desconto e confirmação na hora. Para outras formas de pagamento, fale com a gente pelo WhatsApp.</p></div>
-    <div><h3>Troca em até 7 dias</h3><p>Após o recebimento, com o produto sem uso e na embalagem original.</p></div>
+    <div><h3>Pagamento por Pix</h3><p>Pagamento 100% por Pix, com desconto e confirmação automática na hora. Você vê o status do pagamento na tela e recebe a confirmação por e-mail.</p></div>
+    <div><h3>Atendimento humano</h3><p>Depois da compra, uma pessoa da nossa equipe continua com você pelo WhatsApp: confirma os dados, tira dúvidas e avisa quando o pedido for enviado.</p></div>
+    <div><h3>Enviado de Santos/SP</h3><p>Seu pedido é preparado e enviado de Santos/SP. Calcule frete e prazo pelo CEP; compras a partir de R$ 29,99 têm frete grátis.</p></div>
+    <div><h3>Política de troca</h3><p>Você pode pedir troca ou devolução em até 7 dias corridos após o recebimento, com o produto sem uso e na embalagem original. Se o item chegar com defeito ou diferente do pedido, a gente resolve: fale com a gente pelo WhatsApp com fotos, e fazemos a troca ou o reembolso.</p></div>
   </div>
   <div class="depo" id="depo"></div>
 </div></section>
 
 <section id="faq"><div class="wrap faq">
   <div class="head"><h2>Perguntas frequentes</h2></div>
-  <details><summary>Vocês entregam em todo o Brasil?</summary><p>Sim. Enviamos para todo o Brasil. O valor do frete e o prazo são confirmados com você no WhatsApp antes de fechar o pedido.</p></details>
+  <details><summary>Vocês entregam em todo o Brasil?</summary><p>Sim. Enviamos de Santos/SP para todo o Brasil. Informe seu CEP para ver o frete e o prazo estimado; compras a partir de R$ 29,99 têm frete grátis.</p></details>
   <details><summary>Como finalizo minha compra?</summary><p>Adicione os produtos ao carrinho e toque em “Finalizar pelo WhatsApp”. O pedido já vai pronto na conversa e nossa equipe continua o atendimento com você.</p></details>
   <details><summary>Quais são as formas de pagamento?</summary><p>Pagamento por Pix, com desconto e confirmação na hora. Para outras formas de pagamento, fale com a gente pelo WhatsApp.</p></details>
-  <details><summary>Posso trocar um produto?</summary><p>Pode. As trocas são aceitas em até 7 dias após o recebimento, com o produto sem uso e na embalagem original.</p></details>
+  <details><summary>Posso trocar um produto?</summary><p>Pode. Aceitamos troca ou devolução em até 7 dias corridos após o recebimento, com o produto sem uso e na embalagem original. Em caso de defeito ou item diferente do pedido, fale com a gente pelo WhatsApp (com fotos) e fazemos a troca ou o reembolso.</p></details>
   <details><summary>Quanto tempo leva para chegar?</summary><p>Depende da sua região. Informamos o prazo no atendimento, e por isso vale pedir com antecedência para receber antes do Natal.</p></details>
 </div></section>
 </main>
@@ -345,12 +396,12 @@ var CONFIG = {
   email: "",                            // opcional
   cnpj: "56.401.947/0001-69",
   pixApi: "https://magia-pix06a4.r50015088.workers.dev",   // servidor do Pix (Cloudflare). Vazio = esconde o botao
-  origemFrete: "Balneário Camboriú/SC",
+  origemFrete: "Santos/SP",
   blackFriday: { ativo:true, desconto:40, ate:"2026-11-30T23:59:59-03:00" },  // desconto em % sobre o preço normal; some sozinho depois da data
   freteGratis: false,                   // true = frete grátis em TODOS os pedidos; false = grátis só acima de freteGratisAcima
   diasPreparo: 2,                       // dias úteis para separar e postar o pedido (AJUSTE)
   // Prazo de entrega por região, em dias úteis APÓS a postagem (valor = frete em R$ quando o frete não é grátis)
-  frete: { sul:{valor:19.9,dmin:4,dmax:8}, sudeste:{valor:24.9,dmin:5,dmax:9}, centro:{valor:34.9,dmin:7,dmax:12}, nordeste:{valor:44.9,dmin:9,dmax:15}, norte:{valor:54.9,dmin:12,dmax:20} },
+  frete: { sul:{valor:19.9,dmin:3,dmax:7}, sudeste:{valor:24.9,dmin:2,dmax:5}, centro:{valor:34.9,dmin:4,dmax:8}, nordeste:{valor:44.9,dmin:6,dmax:12}, norte:{valor:54.9,dmin:8,dmax:15} },
   pixDesconto: 5,                       // % de desconto no Pix (0 para desligar)
   parcelasMax: 1,                       // máximo de parcelas sem juros (1 = não mostra parcelamento; só aumente se passar a vender no cartão)
   parcelaMinima: 5,                     // valor mínimo de cada parcela (R$)
@@ -860,9 +911,12 @@ var CATALOGO = [
   "variacoes": ""
  }
 ];
+/* PRODUTO DE TESTE (R$ 1,00): aparece só em magianatalina.online/?teste=1. Sem desconto e sem frete. Para remover, apague este bloco. */
+var ID_TESTE="teste-1-real";
+if(/[?&]teste=1/.test(location.search)) CATALOGO.unshift({id:ID_TESTE,nome:"Produto de teste (R$ 1,00)",nomeCompleto:"Produto de teste (R$ 1,00)",cat:"portas",preco:1,imgs:[],desc:"Item apenas para testar o pagamento por Pix. Não é enviado.",variacoes:""});
 var PRODUCTS = CATALOGO;
 function bfAtivo(){ var b=CONFIG.blackFriday; return !!(b&&b.ativo&&b.desconto>0&&Date.now()<=new Date(b.ate).getTime()); }
-if(bfAtivo()) PRODUCTS.forEach(function(p){ p.precoOriginal=p.preco; p.preco=Math.round(p.preco*(100-CONFIG.blackFriday.desconto))/100; });
+if(bfAtivo()) PRODUCTS.forEach(function(p){ if(p.id===ID_TESTE) return; p.precoOriginal=p.preco; p.preco=Math.round(p.preco*(100-CONFIG.blackFriday.desconto))/100; });
 /* ======================== */
 
 var $ = function(s){return document.querySelector(s)};
@@ -877,8 +931,8 @@ function addUteis(d,n){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate())
 function dm(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 function prazoEntrega(){ if(!ship) return null; var r=CONFIG.frete[UFREG[ship.uf]], hoje=new Date(), envio=addUteis(hoje,CONFIG.diasPreparo||0); return {envio:envio, de:addUteis(envio,r.dmin), ate:addUteis(envio,r.dmax)}; }
 function prazoTexto(){ var p=prazoEntrega(); return p?"Envio até "+dm(p.envio)+" · entrega estimada de "+dm(p.de)+" a "+dm(p.ate):""; }
-function freteValor(){ if(CONFIG.freteGratis) return 0; if(!ship) return null; var f=CONFIG.freteGratisAcima; if(f>0&&subtotal()>=f) return 0; return CONFIG.frete[UFREG[ship.uf]].valor; }
-function pixTotal(){ return Math.round(subtotal()*(100-CONFIG.pixDesconto))/100+(freteValor()||0); }
+function freteValor(){ if(CONFIG.freteGratis) return 0; if(subtotal()===0&&subtotalTeste()>0) return 0; if(!ship) return null; var f=CONFIG.freteGratisAcima; if(f>0&&subtotal()>=f) return 0; return CONFIG.frete[UFREG[ship.uf]].valor; }
+function pixTotal(){ return Math.round((Math.round(subtotal()*(100-CONFIG.pixDesconto))/100+(freteValor()||0)+subtotalTeste())*100)/100; }
 function prod(id){ return PRODUCTS.filter(function(p){return p.id===id})[0]; }
 function catNome(id){ return CATS.filter(function(c){return c.id===id})[0].nome; }
 function fmtFone(n){ var d=n.replace(/\D/g,""); if(d.length>=12){ return "("+d.slice(2,4)+") "+d.slice(4,-4)+"-"+d.slice(-4);} return d; }
@@ -974,7 +1028,8 @@ function renderDepo(){
 }
 
 /* ---------- carrinho ---------- */
-function subtotal(){ return cart.reduce(function(s,i){return s+prod(i.id).preco*i.qty},0); }
+function subtotal(){ return cart.reduce(function(s,i){return i.id===ID_TESTE?s:s+prod(i.id).preco*i.qty},0); }
+function subtotalTeste(){ return cart.reduce(function(s,i){return i.id===ID_TESTE?s+prod(i.id).preco*i.qty:s},0); }
 function pedidoTexto(){
   var t="Olá! Quero finalizar meu pedido na Magia Natalina:\n";
   cart.forEach(function(i){ var p=prod(i.id); t+="- "+i.qty+"x "+p.nome+(p.variacoes?" [opção a confirmar]":"")+" ("+fmt.format(p.preco*i.qty)+")\n"; });
@@ -1120,7 +1175,7 @@ function gerarPix(){
   if(!cart.length) return;
   if(!ship){ toast("Informe seu CEP e toque em Calcular antes de pagar com Pix"); var ce=$("#cep"); if(ce) ce.focus(); return; }
   clearInterval(pixTimer); clearInterval(pixPoll);
-  pixSheet('<h2>Gerando seu Pix…</h2><p style="color:var(--muted)">Aguarde um instante.</p>');
+  pixSheet('<div class="pixstate"><div class="pixspin" role="img" aria-label="Carregando"></div><h2>Gerando pagamento…</h2><p style="color:var(--muted)">Aguarde um instante, estamos criando o seu Pix.</p></div>');
   var ctl=new AbortController(), to=setTimeout(function(){ctl.abort()},20000);
   fetch(CONFIG.pixApi.replace(/\/$/,"")+"/pix",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cep:ship.cep,cliente:{nome:clienteAtual.nome,email:clienteAtual.email,tel:clienteAtual.tel,cpf:clienteAtual.cpf,nasc:clienteAtual.nasc,aceite:true},itens:cart.map(function(i){return{id:i.id,qty:i.qty}})}),signal:ctl.signal})
     .then(function(r){return r.json()})
@@ -1138,14 +1193,14 @@ function mostrarPix(d){
   h+='<a class="btn wa" href="pedido.html?p='+encodeURIComponent(d.pedido)+'">Já paguei — acompanhar meu pedido</a><a class="copybtn" href="'+waLink(msg)+'" target="_blank" rel="noopener">Prefere avisar pelo WhatsApp?</a>';
   h+='<small>Abra o app do seu banco, escolha Pix → QR Code ou copia e cola. '+(d.frete===0?'Frete grátis. ':'O frete já está incluso. ')+prazoTexto()+'.</small>';
   pixSheet(h);
-  try{ localStorage.setItem("mn-pedido",JSON.stringify({pedido:d.pedido,total:d.total,code:d.code||"",qr:(d.qr&&d.qr.indexOf("data:")===0&&d.qr.length<60000)?d.qr:"",criado:Date.now(),nome:(clienteAtual?clienteAtual.nome.split(" ")[0]:""),prazo:prazoTexto(),itens:cart.map(function(i){return{qty:i.qty,nome:prod(i.id).nome}})})); }catch(e){}
+  try{ localStorage.setItem("mn-pedido",JSON.stringify({pedido:d.pedido,total:d.total,code:d.code||"",qr:(d.qr&&d.qr.indexOf("data:")===0&&d.qr.length<60000)?d.qr:"",criado:Date.now(),nome:(clienteAtual?clienteAtual.nome.split(" ")[0]:""),email:(clienteAtual?clienteAtual.email:""),prazo:prazoTexto(),itens:cart.map(function(i){return{qty:i.qty,nome:prod(i.id).nome}})})); }catch(e){}
   clearInterval(pixPoll);
-  pixPoll=setInterval(function(){ fetch(CONFIG.pixApi.replace(/\/$/,"")+"/status?pedido="+encodeURIComponent(d.pedido),{cache:"no-store"}).then(function(r){return r.json()}).then(function(s){ if(s&&s.status==="pago"){ clearInterval(pixPoll); location.href="pedido.html?p="+encodeURIComponent(d.pedido); } }).catch(function(){}); },4000);
+  pixPoll=setInterval(function(){ fetch(CONFIG.pixApi.replace(/\/$/,"")+"/status?pedido="+encodeURIComponent(d.pedido),{cache:"no-store"}).then(function(r){return r.json()}).then(function(s){ if(s&&s.status==="pago"){ clearInterval(pixPoll); pixSheet('<div class="pixstate"><div class="pixok" aria-hidden="true">✓</div><h2>Pagamento recebido!</h2><p style="color:var(--muted)">Abrindo a confirmação do seu pedido…</p></div>'); setTimeout(function(){ location.href="pedido.html?p="+encodeURIComponent(d.pedido); },1200); } }).catch(function(){}); },4000);
   var box=$("#pixqr");
   if(d.qr){ var im=new Image(); im.alt="QR Code Pix"; im.src=d.qr; box.appendChild(im); }
   else if(window.QRCode&&d.code){ try{ new QRCode(box,{text:d.code,width:210,height:210,correctLevel:QRCode.CorrectLevel.L}); }catch(e){ box.hidden=true; } }
   else box.hidden=true;
-  $("#pixtempo").textContent="Pague pelo app do seu banco e toque no botão abaixo. Se o código não funcionar, gere um novo Pix.";
+  $("#pixtempo").innerHTML='<b class="pixwait">Aguardando confirmação do pagamento</b><br>Pague pelo app do seu banco: esta tela muda sozinha quando o Pix for confirmado.';
 }
 
 /* ---------- produto ---------- */
@@ -1210,7 +1265,9 @@ $("#footWa").textContent=fmtFone(CONFIG.whatsapp);
 if(!CONFIG.pixApi){ var rb=$("#openReg"), cb=$("#cadastro"); if(rb) rb.hidden=true; if(cb) cb.hidden=true; }
 atualizaConta();
 if(CONFIG.email) $("#footMail").textContent="E-mail: "+CONFIG.email;
-if(CONFIG.cnpj) $("#footCnpj").textContent="CNPJ: "+CONFIG.cnpj;
+if(CONFIG.cnpj){ $("#footCnpj").textContent="CNPJ: "+CONFIG.cnpj; var sc=$("#safeCnpj"); if(sc) sc.textContent=CONFIG.cnpj; }
 $("#fab").href=waLink("Olá! Vim pelo site da Magia Natalina e gostaria de ajuda.");
 heroArt(); renderCats(); renderTools(); renderGrid(); renderDepo(); renderCart(); tick(); setInterval(tick,1000);
 </script>
+</body>
+</html>

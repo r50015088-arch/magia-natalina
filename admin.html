@@ -33,6 +33,10 @@ ul{margin:.3rem 0 .6rem;padding-left:1.1rem;font-size:.93rem}
 .acoes{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
 #msg{color:var(--err);min-height:1.2em}
 [hidden]{display:none!important}
+.env{margin-top:.8rem}.env summary{cursor:pointer;font-weight:700;color:var(--brand);min-height:40px;display:flex;align-items:center}
+.fenv{display:grid;gap:.6rem;margin-top:.4rem}.fenv label{display:grid;gap:.25rem;font-weight:700;font-size:.9rem}
+.fenv input{font:inherit;font-size:16px;padding:.6rem;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--fg)}
+.fmsg{font-size:.9rem;color:var(--muted)}.env-ok{margin:.6rem 0 0;color:var(--ok);font-size:.92rem}
 </style>
 </head>
 <body>
@@ -126,7 +130,10 @@ function desenhar(){
     +(an!=="contatado"?'<button class="btn ghost" data-a="contatado" data-p="'+hx(p.pedido)+'">Marcar como contatado</button>':'')
     +(an!=="enviado"?'<button class="btn ghost" data-a="enviado" data-p="'+hx(p.pedido)+'">Marcar como enviado</button>':'')
     +(an!=="novo"?'<button class="btn ghost" data-a="novo" data-p="'+hx(p.pedido)+'">Voltar para novo</button>':'')
-    +'</div></article>';
+    +'</div>'
+    +(st==="pago"?(p.rastreio?'<p class="env-ok">E-mail de envio enviado em '+hx(data(p.rastreio.enviadoEm))+' · rastreio <b>'+hx(p.rastreio.codigo)+'</b></p>':'')
+      +'<details class="env"><summary>'+(p.rastreio?'Reenviar':'Enviar')+' e-mail "Seu pedido foi enviado"</summary><form class="fenv" data-p="'+hx(p.pedido)+'"><label>Código de rastreio<input name="codigo" required maxlength="40" value="'+hx(p.rastreio?p.rastreio.codigo:"")+'" placeholder="Ex.: AB123456789BR"></label><label>Link de rastreio (opcional)<input name="link" type="url" placeholder="https://… (Correios é automático)" value="'+hx(p.rastreio?p.rastreio.link:"")+'"></label><label>Previsão de entrega (opcional)<input name="previsao" maxlength="80" placeholder="Deixe vazio para calcular pelo CEP"></label><button class="btn" type="submit">Enviar e-mail ao cliente</button><span class="fmsg" role="status"></span></form></details>':'')
+    +'</article>';
   }).join(""):'<p>Nenhum pedido neste filtro.</p>';
 }
 function sair(manter){ token=""; try{ sessionStorage.removeItem("mn-admin"); }catch(e){} $("#painel").hidden=true; $("#login").hidden=false; if(!manter) $("#msg").textContent=""; }
@@ -144,7 +151,16 @@ function baixarCsv(){
   var blob=new Blob(["﻿"+[cab.map(csvCel).join(";")].concat(linhas).join("\r\n")],{type:"text/csv;charset=utf-8"});
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pedidos-magia-natalina.csv"; document.body.appendChild(a); a.click(); a.remove();
 }
-$("#login").addEventListener("submit",function(e){ e.preventDefault(); token=$("#token").value.trim(); if(token) carregar(); });
+$("#login").addEventListener("submit",function(e){ e.preventDefault(); token=$("#token").value.trim(); $("#lista").addEventListener("submit",function(e){
+  var f=e.target.closest("form.fenv"); if(!f) return; e.preventDefault();
+  var btn=f.querySelector("button"), m=f.querySelector(".fmsg"); btn.disabled=true; m.textContent="Enviando…";
+  ped(null,"/admin/enviar",{pedido:f.dataset.p,codigo:f.codigo.value,link:f.link.value,previsao:f.previsao.value}).then(function(r){
+    btn.disabled=false;
+    if(r.d&&r.d.ok){ m.textContent="Enviado para "+r.d.para; carregar(); }
+    else { var er=r.d&&r.d.erro, mo=r.d&&r.d.motivo; m.textContent=er==="email_nao_enviado"?(mo==="sem_chave"?"Falta configurar a RESEND_API_KEY no Cloudflare.":"A Resend recusou o envio ("+hx(mo)+"). Verifique o domínio e o EMAIL_FROM."):er==="link_invalido"?"O link precisa começar com https://":"Não foi possível enviar ("+hx(er||r.s)+")."; }
+  }).catch(function(){ btn.disabled=false; m.textContent="Sem conexão com o servidor."; });
+});
+if(token) carregar(); });
 $("#filtro").addEventListener("change",desenhar);
 $("#atualizar").addEventListener("click",carregar);
 $("#csv").addEventListener("click",baixarCsv);
